@@ -221,6 +221,44 @@ pub fn inv_perm512(
     }
 }
 
+pub fn areion256_dm(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
+    unsafe {
+        let (x0_p, x1_p) = perm256(x0, x1);
+        (veorq_u8(x0_p, x0), veorq_u8(x1_p, x1))
+    }
+}
+
+pub fn areion512_dm(
+    x0: uint8x16_t,
+    x1: uint8x16_t,
+    x2: uint8x16_t,
+    x3: uint8x16_t,
+) -> (uint8x16_t, uint8x16_t) {
+    unsafe {
+        let (x0_p, x1_p, x2_p, x3_p) = perm512(x0, x1, x2, x3);
+        let (x0_p, x1_p, x2_p, x3_p) = (
+            veorq_u8(x0_p, x0),
+            veorq_u8(x1_p, x1),
+            veorq_u8(x2_p, x2),
+            veorq_u8(x3_p, x3),
+        );
+
+        let mut x = [0u32; 16];
+        vst1q_u32(x[..4].as_mut_ptr(), vreinterpretq_u32_u8(x0_p));
+        vst1q_u32(x[4..8].as_mut_ptr(), vreinterpretq_u32_u8(x1_p));
+        vst1q_u32(x[8..12].as_mut_ptr(), vreinterpretq_u32_u8(x2_p));
+        vst1q_u32(x[12..].as_mut_ptr(), vreinterpretq_u32_u8(x3_p));
+
+        let x0 = [x[2], x[3], x[6], x[7]];
+        let x1 = [x[8], x[9], x[12], x[13]];
+
+        (
+            vreinterpretq_u8_u32(vld1q_u32(x0.as_ptr())),
+            vreinterpretq_u8_u32(vld1q_u32(x1.as_ptr())),
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -345,6 +383,78 @@ mod tests {
                 6f 07 b0 09 a3 04 98 5a f4 37 bb 60 8a 4c b8 31
                 39 2a 6f 2f 48 e4 25 ef 24 11 96 21 67 2e 37 c4
                 f1 9b 94 e0 e4 ea ed af b9 f4 eb 12 6a 6d 8a bb"#]]
+            .assert_eq(&hex_fmt(&x_p));
+        }
+    }
+
+    #[test]
+    fn areion256_dm_test_vector_1() {
+        unsafe {
+            let x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let (x0, x1) = areion256_dm(x0, x1);
+
+            let mut x_p = [0u8; 32];
+            store!(&mut x_p[..16], x0);
+            store!(&mut x_p[16..], x1);
+            expect![[r#"
+                e5 a7 66 63 82 50 14 24 68 dc 9d 76 65 dd 36 9f
+                8f 79 99 8b 7a a0 92 90 6f e5 1b fd eb fa c9 c1"#]]
+            .assert_eq(&hex_fmt(&x_p));
+        }
+    }
+
+    #[test]
+    fn areion256_dm_test_vector_2() {
+        unsafe {
+            let x0 = load!(hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
+            let x1 = load!(hex!("10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f"));
+            let (x0, x1) = areion256_dm(x0, x1);
+
+            let mut x_p = [0u8; 32];
+            store!(&mut x_p[..16], x0);
+            store!(&mut x_p[16..], x1);
+            expect![[r#"
+                73 52 ee 52 d0 9a ab 8e e6 c2 51 e4 12 ad ea 79
+                fd 7d ce ce bb 21 74 1a 19 24 d6 e9 be 3b ea 48"#]]
+            .assert_eq(&hex_fmt(&x_p));
+        }
+    }
+
+    #[test]
+    fn areion512_dm_test_vector_1() {
+        unsafe {
+            let x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x2 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x3 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let (x0, x1) = areion512_dm(x0, x1, x2, x3);
+
+            let mut x_p = [0u8; 32];
+            store!(&mut x_p[..16], x0);
+            store!(&mut x_p[16..32], x1);
+            expect![[r#"
+                58 08 94 59 f4 54 e9 6f 91 6b cf 9c fb 63 d2 5b
+                a0 26 42 fc c1 75 12 36 0b 72 3a fc 66 68 ff f3"#]]
+            .assert_eq(&hex_fmt(&x_p));
+        }
+    }
+
+    #[test]
+    fn areion512_dm_test_vector_2() {
+        unsafe {
+            let x0 = load!(hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
+            let x1 = load!(hex!("10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f"));
+            let x2 = load!(hex!("20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f"));
+            let x3 = load!(hex!("30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f"));
+            let (x0, x1) = areion512_dm(x0, x1, x2, x3);
+
+            let mut x_p = [0u8; 32];
+            store!(&mut x_p[..16], x0);
+            store!(&mut x_p[16..32], x1);
+            expect![[r#"
+                b2 db 56 23 1e bf 3e f9 ec 2e a1 7b 96 51 a6 2e
+                19 0b 4d 0c 6c c1 03 c8 c1 aa a6 d3 d0 df db 98"#]]
             .assert_eq(&hex_fmt(&x_p));
         }
     }

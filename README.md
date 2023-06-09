@@ -14,6 +14,8 @@ On my M2 Air:
 ```text
 perm256                 time:   [6.5158 ns 6.5373 ns 6.5629 ns]
 perm512                 time:   [12.172 ns 12.181 ns 12.190 ns]
+areion256-dm            time:   [6.5103 ns 6.5158 ns 6.5214 ns]
+areion512-dm            time:   [13.866 ns 13.892 ns 13.929 ns]
 ```
 
 ## License
