@@ -1,0 +1,16 @@
+[package]
+name = "areion"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hex-literal = "0.4.1"
+
+[dev-dependencies]
+criterion = "0.5.1"
+expect-test = "1.4.1"
+hex = "0.4.3"
+
+[[bench]]
+name = "benchmarks"
+harness = false
