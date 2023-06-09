@@ -12,8 +12,8 @@ cryptanalysis to date.
 On my M2 Air:
 
 ```text
-perm256                 time:   [32.132 ns 32.164 ns 32.204 ns]
-perm512                 time:   [26.095 ns 26.150 ns 26.222 ns]
+perm256                 time:   [6.5158 ns 6.5373 ns 6.5629 ns]
+perm512                 time:   [12.172 ns 12.181 ns 12.190 ns]
 ```
 
 ## License

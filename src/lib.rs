@@ -1,77 +1,69 @@
-#![allow(unused_unsafe, unused)]
 use core::arch::aarch64::*;
 use core::arch::asm;
 use hex_literal::hex;
 
 macro_rules! load {
     ($bytes:expr) => {{
-        unsafe { vld1q_u8($bytes.as_ptr()) }
+        vld1q_u8($bytes.as_ptr())
     }};
 }
 
+#[cfg(test)]
 macro_rules! store {
     ($bytes:expr, $block:expr) => {{
-        unsafe { vst1q_u8($bytes.as_mut_ptr(), $block) };
+        vst1q_u8($bytes.as_mut_ptr(), $block)
     }};
 }
 
 macro_rules! enc {
     ($a:expr, $b:expr) => {{
-        unsafe {
-            let z = vmovq_n_u8(0);
-            let mut a = $a;
-            // TODO replace with vaeseq_u8 and vaesmcq_u8 when that's stable
-            asm!(
-                "AESE {0:v}.16B, {1:v}.16B",
-                "AESMC {0:v}.16B, {0:v}.16B",
-                inout(vreg) a, in(vreg) z,
-            );
-            veorq_u8(a, $b)
-        }
+        let z = vmovq_n_u8(0);
+        let mut a = $a;
+        // TODO replace with vaeseq_u8 and vaesmcq_u8 when that's stable
+        asm!(
+            "AESE {0:v}.16B, {1:v}.16B",
+            "AESMC {0:v}.16B, {0:v}.16B",
+            inout(vreg) a, in(vreg) z,
+        );
+        veorq_u8(a, $b)
     }};
 }
 
 macro_rules! enc_last {
     ($a:expr, $b:expr) => {{
-        unsafe {
-            let z = vmovq_n_u8(0);
-            let mut a = $a;
-            // TODO replace with vaeseq_u8 when that's stable
-            asm!(
-                "AESE {0:v}.16B, {1:v}.16B",
-                inout(vreg) a, in(vreg) z,
-            );
-            veorq_u8(a, $b)
-        }
+        let z = vmovq_n_u8(0);
+        let mut a = $a;
+        // TODO replace with vaeseq_u8 when that's stable
+        asm!(
+            "AESE {0:v}.16B, {1:v}.16B",
+            inout(vreg) a, in(vreg) z,
+        );
+        veorq_u8(a, $b)
     }};
 }
 
 macro_rules! dec_last {
     ($a:expr, $b:expr) => {{
-        unsafe {
-            let z = vmovq_n_u8(0);
-            let mut a = $a;
-            // TODO replace with vaeseq_u8 when that's stable
-            asm!(
-                "AESD {0:v}.16B, {1:v}.16B",
-                inout(vreg) a, in(vreg) z,
-            );
-            veorq_u8(a, $b)
-        }
+        let z = vmovq_n_u8(0);
+        let mut a = $a;
+        // TODO replace with vaeseq_u8 when that's stable
+        asm!(
+            "AESD {0:v}.16B, {1:v}.16B",
+            inout(vreg) a, in(vreg) z,
+        );
+        veorq_u8(a, $b)
     }};
 }
 
 macro_rules! inv_mix {
     ($a:expr) => {{
-        unsafe {
-            let mut a = $a;
-            // TODO replace with vaesimc_u8 when that's stable
-            asm!(
-                "AESIMC {0:v}.16B, {0:v}.16B",
-                inout(vreg) a,
-            );
-            a
-        }
+        let mut a = $a;
+        // TODO replace with vaesimc_u8 when that's stable
+        asm!(
+            "AESIMC {0:v}.16B, {0:v}.16B",
+            inout(vreg) a,
+        );
+        a
     }};
 }
 
@@ -104,123 +96,128 @@ static RC0: [[u8; 16]; 24] = [
 
 static RC1: [u8; 16] = hex!("00000000000000000000000000000000");
 
-unsafe fn round_256(x0: &mut uint8x16_t, x1: &mut uint8x16_t, i: usize) {
-    let rc0 = load!(&RC0[i]);
-    let rc1 = load!(&RC1);
-    *x1 = enc!(enc!(*x0, rc0), *x1);
-    *x0 = enc_last!(*x0, rc1);
+macro_rules! round_256 {
+    ($x0:expr, $x1:expr, $i:literal) => {{
+        let rc0 = load!(&RC0[$i]);
+        let rc1 = load!(&RC1);
+        $x1 = enc!(enc!($x0, rc0), $x1);
+        $x0 = enc_last!($x0, rc1);
+    }};
 }
 
-unsafe fn inv_round_256(x0: &mut uint8x16_t, x1: &mut uint8x16_t, i: usize) {
-    let rc0 = load!(&RC0[i]);
-    let rc1 = load!(&RC1);
-    *x0 = dec_last!(*x0, rc1);
-    *x1 = enc!(enc!(*x0, rc0), *x1);
-}
-
-pub fn perm256(x0: &mut uint8x16_t, x1: &mut uint8x16_t) {
+pub fn perm256(mut x0: uint8x16_t, mut x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
     unsafe {
-        round_256(x0, x1, 0);
-        round_256(x1, x0, 1);
-        round_256(x0, x1, 2);
-        round_256(x1, x0, 3);
-        round_256(x0, x1, 4);
-        round_256(x1, x0, 5);
-        round_256(x0, x1, 6);
-        round_256(x1, x0, 7);
-        round_256(x0, x1, 8);
-        round_256(x1, x0, 9);
+        round_256!(x0, x1, 0);
+        round_256!(x1, x0, 1);
+        round_256!(x0, x1, 2);
+        round_256!(x1, x0, 3);
+        round_256!(x0, x1, 4);
+        round_256!(x1, x0, 5);
+        round_256!(x0, x1, 6);
+        round_256!(x1, x0, 7);
+        round_256!(x0, x1, 8);
+        round_256!(x1, x0, 9);
+        (x0, x1)
     }
 }
 
-pub fn inv_perm256(x0: &mut uint8x16_t, x1: &mut uint8x16_t) {
+macro_rules! inv_round_256 {
+    ($x0:expr, $x1:expr, $i:literal) => {{
+        let rc0 = load!(&RC0[$i]);
+        let rc1 = load!(&RC1);
+        $x0 = dec_last!($x0, rc1);
+        $x1 = enc!(enc!($x0, rc0), $x1);
+    }};
+}
+
+pub fn inv_perm256(mut x0: uint8x16_t, mut x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
     unsafe {
-        inv_round_256(x1, x0, 9);
-        inv_round_256(x0, x1, 8);
-        inv_round_256(x1, x0, 7);
-        inv_round_256(x0, x1, 6);
-        inv_round_256(x1, x0, 5);
-        inv_round_256(x0, x1, 4);
-        inv_round_256(x1, x0, 3);
-        inv_round_256(x0, x1, 2);
-        inv_round_256(x1, x0, 1);
-        inv_round_256(x0, x1, 0);
+        inv_round_256!(x1, x0, 9);
+        inv_round_256!(x0, x1, 8);
+        inv_round_256!(x1, x0, 7);
+        inv_round_256!(x0, x1, 6);
+        inv_round_256!(x1, x0, 5);
+        inv_round_256!(x0, x1, 4);
+        inv_round_256!(x1, x0, 3);
+        inv_round_256!(x0, x1, 2);
+        inv_round_256!(x1, x0, 1);
+        inv_round_256!(x0, x1, 0);
+        (x0, x1)
     }
 }
 
-unsafe fn round_512(
-    x0: &mut uint8x16_t,
-    x1: &mut uint8x16_t,
-    x2: &mut uint8x16_t,
-    x3: &mut uint8x16_t,
-    i: usize,
-) {
-    let rc0 = load!(&RC0[i]);
-    let rc1 = load!(&RC1);
-    *x1 = enc!(*x0, *x1);
-    *x3 = enc!(*x2, *x3);
-    *x0 = enc_last!(*x0, rc1);
-    *x2 = enc!(enc_last!(*x2, rc0), rc1);
+macro_rules! round_512 {
+    ($x0:expr, $x1:expr, $x2:expr, $x3:expr, $i:literal) => {{
+        let rc0 = load!(&RC0[$i]);
+        let rc1 = load!(&RC1);
+        $x1 = enc!($x0, $x1);
+        $x3 = enc!($x2, $x3);
+        $x0 = enc_last!($x0, rc1);
+        $x2 = enc!(enc_last!($x2, rc0), rc1);
+    }};
 }
 
-unsafe fn inv_round_512(
-    x0: &mut uint8x16_t,
-    x1: &mut uint8x16_t,
-    x2: &mut uint8x16_t,
-    x3: &mut uint8x16_t,
-    i: usize,
-) {
-    let rc0 = load!(&RC0[i]);
-    let rc1 = load!(&RC1);
-
-    *x0 = dec_last!(*x0, rc1);
-    *x2 = dec_last!(dec_last!(inv_mix!(*x2), rc0), rc1);
-    *x1 = enc!(*x0, *x1);
-    *x3 = enc!(*x2, *x3);
-}
-
-pub fn perm512(x0: &mut uint8x16_t, x1: &mut uint8x16_t, x2: &mut uint8x16_t, x3: &mut uint8x16_t) {
+pub fn perm512(
+    mut x0: uint8x16_t,
+    mut x1: uint8x16_t,
+    mut x2: uint8x16_t,
+    mut x3: uint8x16_t,
+) -> (uint8x16_t, uint8x16_t, uint8x16_t, uint8x16_t) {
     unsafe {
-        round_512(x0, x1, x2, x3, 0);
-        round_512(x1, x2, x3, x0, 1);
-        round_512(x2, x3, x0, x1, 2);
-        round_512(x3, x0, x1, x2, 3);
-        round_512(x0, x1, x2, x3, 4);
-        round_512(x1, x2, x3, x0, 5);
-        round_512(x2, x3, x0, x1, 6);
-        round_512(x3, x0, x1, x2, 7);
-        round_512(x0, x1, x2, x3, 8);
-        round_512(x1, x2, x3, x0, 9);
-        round_512(x2, x3, x0, x1, 10);
-        round_512(x3, x0, x1, x2, 11);
-        round_512(x0, x1, x2, x3, 12);
-        round_512(x1, x2, x3, x0, 13);
-        round_512(x2, x3, x0, x1, 14);
+        round_512!(x0, x1, x2, x3, 0);
+        round_512!(x1, x2, x3, x0, 1);
+        round_512!(x2, x3, x0, x1, 2);
+        round_512!(x3, x0, x1, x2, 3);
+        round_512!(x0, x1, x2, x3, 4);
+        round_512!(x1, x2, x3, x0, 5);
+        round_512!(x2, x3, x0, x1, 6);
+        round_512!(x3, x0, x1, x2, 7);
+        round_512!(x0, x1, x2, x3, 8);
+        round_512!(x1, x2, x3, x0, 9);
+        round_512!(x2, x3, x0, x1, 10);
+        round_512!(x3, x0, x1, x2, 11);
+        round_512!(x0, x1, x2, x3, 12);
+        round_512!(x1, x2, x3, x0, 13);
+        round_512!(x2, x3, x0, x1, 14);
+        (x0, x1, x2, x3)
     }
+}
+
+macro_rules! inv_round_512 {
+    ($x0:expr, $x1:expr, $x2:expr, $x3:expr, $i:literal) => {{
+        let rc0 = load!(&RC0[$i]);
+        let rc1 = load!(&RC1);
+
+        $x0 = dec_last!($x0, rc1);
+        $x2 = dec_last!(dec_last!(inv_mix!($x2), rc0), rc1);
+        $x1 = enc!($x0, $x1);
+        $x3 = enc!($x2, $x3);
+    }};
 }
 
 pub fn inv_perm512(
-    x0: &mut uint8x16_t,
-    x1: &mut uint8x16_t,
-    x2: &mut uint8x16_t,
-    x3: &mut uint8x16_t,
-) {
+    mut x0: uint8x16_t,
+    mut x1: uint8x16_t,
+    mut x2: uint8x16_t,
+    mut x3: uint8x16_t,
+) -> (uint8x16_t, uint8x16_t, uint8x16_t, uint8x16_t) {
     unsafe {
-        inv_round_512(x2, x3, x0, x1, 14);
-        inv_round_512(x1, x2, x3, x0, 13);
-        inv_round_512(x0, x1, x2, x3, 12);
-        inv_round_512(x3, x0, x1, x2, 11);
-        inv_round_512(x2, x3, x0, x1, 10);
-        inv_round_512(x1, x2, x3, x0, 9);
-        inv_round_512(x0, x1, x2, x3, 8);
-        inv_round_512(x3, x0, x1, x2, 7);
-        inv_round_512(x2, x3, x0, x1, 6);
-        inv_round_512(x1, x2, x3, x0, 5);
-        inv_round_512(x0, x1, x2, x3, 4);
-        inv_round_512(x3, x0, x1, x2, 3);
-        inv_round_512(x2, x3, x0, x1, 2);
-        inv_round_512(x1, x2, x3, x0, 1);
-        inv_round_512(x0, x1, x2, x3, 0);
+        inv_round_512!(x2, x3, x0, x1, 14);
+        inv_round_512!(x1, x2, x3, x0, 13);
+        inv_round_512!(x0, x1, x2, x3, 12);
+        inv_round_512!(x3, x0, x1, x2, 11);
+        inv_round_512!(x2, x3, x0, x1, 10);
+        inv_round_512!(x1, x2, x3, x0, 9);
+        inv_round_512!(x0, x1, x2, x3, 8);
+        inv_round_512!(x3, x0, x1, x2, 7);
+        inv_round_512!(x2, x3, x0, x1, 6);
+        inv_round_512!(x1, x2, x3, x0, 5);
+        inv_round_512!(x0, x1, x2, x3, 4);
+        inv_round_512!(x3, x0, x1, x2, 3);
+        inv_round_512!(x2, x3, x0, x1, 2);
+        inv_round_512!(x1, x2, x3, x0, 1);
+        inv_round_512!(x0, x1, x2, x3, 0);
+        (x0, x1, x2, x3)
     }
 }
 
@@ -233,10 +230,10 @@ mod tests {
     #[test]
     fn perm256_inversion() {
         unsafe {
-            let mut x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let mut x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            perm256(&mut x0, &mut x1);
-            inv_perm256(&mut x0, &mut x1);
+            let x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let (x0, x1) = perm256(x0, x1);
+            let (x0, x1) = inv_perm256(x0, x1);
 
             let mut x_p = [0u8; 32];
             store!(&mut x_p[..16], x0);
@@ -251,12 +248,12 @@ mod tests {
     #[test]
     fn perm512_inversion() {
         unsafe {
-            let mut x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let mut x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let mut x2 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let mut x3 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            perm512(&mut x0, &mut x1, &mut x2, &mut x3);
-            inv_perm512(&mut x0, &mut x1, &mut x2, &mut x3);
+            let x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x2 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x3 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let (x0, x1, x2, x3) = perm512(x0, x1, x2, x3);
+            let (x0, x1, x2, x3) = inv_perm512(x0, x1, x2, x3);
 
             let mut x_p = [0u8; 64];
             store!(&mut x_p[..16], x0);
@@ -275,9 +272,9 @@ mod tests {
     #[test]
     fn perm256_test_vector_1() {
         unsafe {
-            let mut x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let mut x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            perm256(&mut x0, &mut x1);
+            let x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let (x0, x1) = perm256(x0, x1);
 
             let mut x_p = [0u8; 32];
             store!(&mut x_p[..16], x0);
@@ -292,9 +289,9 @@ mod tests {
     #[test]
     fn perm256_test_vector_2() {
         unsafe {
-            let mut x0 = load!(hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
-            let mut x1 = load!(hex!("10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f"));
-            perm256(&mut x0, &mut x1);
+            let x0 = load!(hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
+            let x1 = load!(hex!("10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f"));
+            let (x0, x1) = perm256(x0, x1);
 
             let mut x_p = [0u8; 32];
             store!(&mut x_p[..16], x0);
@@ -309,11 +306,11 @@ mod tests {
     #[test]
     fn perm512_test_vector_1() {
         unsafe {
-            let mut x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let mut x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let mut x2 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let mut x3 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            perm512(&mut x0, &mut x1, &mut x2, &mut x3);
+            let x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x2 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let x3 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+            let (x0, x1, x2, x3) = perm512(x0, x1, x2, x3);
 
             let mut x_p = [0u8; 64];
             store!(&mut x_p[..16], x0);
@@ -332,11 +329,11 @@ mod tests {
     #[test]
     fn perm512_test_vector_2() {
         unsafe {
-            let mut x0 = load!(hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
-            let mut x1 = load!(hex!("10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f"));
-            let mut x2 = load!(hex!("20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f"));
-            let mut x3 = load!(hex!("30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f"));
-            perm512(&mut x0, &mut x1, &mut x2, &mut x3);
+            let x0 = load!(hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
+            let x1 = load!(hex!("10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f"));
+            let x2 = load!(hex!("20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f"));
+            let x3 = load!(hex!("30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f"));
+            let (x0, x1, x2, x3) = perm512(x0, x1, x2, x3);
 
             let mut x_p = [0u8; 64];
             store!(&mut x_p[..16], x0);

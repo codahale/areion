@@ -5,14 +5,12 @@ use criterion::{criterion_group, criterion_main, Criterion};
 
 fn perm(c: &mut Criterion) {
     unsafe {
-        let mut x0 = vmovq_n_u8(0);
-        let mut x1 = vmovq_n_u8(0);
-        let mut x2 = vmovq_n_u8(0);
-        let mut x3 = vmovq_n_u8(0);
-        c.bench_function("perm256", |b| b.iter(|| perm256(&mut x0, &mut x1)));
-        c.bench_function("perm512", |b| {
-            b.iter(|| perm512(&mut x0, &mut x1, &mut x2, &mut x3))
-        });
+        let x0 = vmovq_n_u8(0);
+        let x1 = vmovq_n_u8(0);
+        let x2 = vmovq_n_u8(0);
+        let x3 = vmovq_n_u8(0);
+        c.bench_function("perm256", |b| b.iter(|| perm256(x0, x1)));
+        c.bench_function("perm512", |b| b.iter(|| perm512(x0, x1, x2, x3)));
     }
 }
 
