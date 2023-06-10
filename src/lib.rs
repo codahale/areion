@@ -104,7 +104,7 @@ macro_rules! round_256 {
     }};
 }
 
-pub fn perm256(mut x0: uint8x16_t, mut x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
+pub fn areion256(mut x0: uint8x16_t, mut x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
     unsafe {
         round_256!(x0, x1, 0);
         round_256!(x1, x0, 1);
@@ -129,7 +129,7 @@ macro_rules! inv_round_256 {
     }};
 }
 
-pub fn inv_perm256(mut x0: uint8x16_t, mut x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
+pub fn inv_areion256(mut x0: uint8x16_t, mut x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
     unsafe {
         inv_round_256!(x1, x0, 9);
         inv_round_256!(x0, x1, 8);
@@ -156,7 +156,7 @@ macro_rules! round_512 {
     }};
 }
 
-pub fn perm512(
+pub fn areion512(
     mut x0: uint8x16_t,
     mut x1: uint8x16_t,
     mut x2: uint8x16_t,
@@ -194,7 +194,7 @@ macro_rules! inv_round_512 {
     }};
 }
 
-pub fn inv_perm512(
+pub fn inv_areion512(
     mut x0: uint8x16_t,
     mut x1: uint8x16_t,
     mut x2: uint8x16_t,
@@ -222,7 +222,7 @@ pub fn inv_perm512(
 
 pub fn areion256_dm(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
     unsafe {
-        let (x0_p, x1_p) = perm256(x0, x1);
+        let (x0_p, x1_p) = areion256(x0, x1);
         (veorq_u8(x0_p, x0), veorq_u8(x1_p, x1))
     }
 }
@@ -234,7 +234,7 @@ pub fn areion512_dm(
     x3: uint8x16_t,
 ) -> (uint8x16_t, uint8x16_t) {
     unsafe {
-        let (x0_p, x1_p, x2_p, x3_p) = perm512(x0, x1, x2, x3);
+        let (x0_p, x1_p, x2_p, x3_p) = areion512(x0, x1, x2, x3);
         let (x0_p, x1_p, x2_p, x3_p) = (
             veorq_u8(x0_p, x0),
             veorq_u8(x1_p, x1),
@@ -304,8 +304,8 @@ mod tests {
         unsafe {
             let x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
             let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let (x0, x1) = perm256(x0, x1);
-            let (x0, x1) = inv_perm256(x0, x1);
+            let (x0, x1) = areion256(x0, x1);
+            let (x0, x1) = inv_areion256(x0, x1);
 
             let mut x_p = [0u8; 32];
             store!(&mut x_p[..16], x0);
@@ -324,8 +324,8 @@ mod tests {
             let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
             let x2 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
             let x3 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let (x0, x1, x2, x3) = perm512(x0, x1, x2, x3);
-            let (x0, x1, x2, x3) = inv_perm512(x0, x1, x2, x3);
+            let (x0, x1, x2, x3) = areion512(x0, x1, x2, x3);
+            let (x0, x1, x2, x3) = inv_areion512(x0, x1, x2, x3);
 
             let mut x_p = [0u8; 64];
             store!(&mut x_p[..16], x0);
@@ -346,7 +346,7 @@ mod tests {
         unsafe {
             let x0 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
             let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let (x0, x1) = perm256(x0, x1);
+            let (x0, x1) = areion256(x0, x1);
 
             let mut x_p = [0u8; 32];
             store!(&mut x_p[..16], x0);
@@ -363,7 +363,7 @@ mod tests {
         unsafe {
             let x0 = load!(hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
             let x1 = load!(hex!("10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f"));
-            let (x0, x1) = perm256(x0, x1);
+            let (x0, x1) = areion256(x0, x1);
 
             let mut x_p = [0u8; 32];
             store!(&mut x_p[..16], x0);
@@ -382,7 +382,7 @@ mod tests {
             let x1 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
             let x2 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
             let x3 = load!(hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
-            let (x0, x1, x2, x3) = perm512(x0, x1, x2, x3);
+            let (x0, x1, x2, x3) = areion512(x0, x1, x2, x3);
 
             let mut x_p = [0u8; 64];
             store!(&mut x_p[..16], x0);
@@ -405,7 +405,7 @@ mod tests {
             let x1 = load!(hex!("10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f"));
             let x2 = load!(hex!("20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f"));
             let x3 = load!(hex!("30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f"));
-            let (x0, x1, x2, x3) = perm512(x0, x1, x2, x3);
+            let (x0, x1, x2, x3) = areion512(x0, x1, x2, x3);
 
             let mut x_p = [0u8; 64];
             store!(&mut x_p[..16], x0);
