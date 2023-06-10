@@ -1,7 +1,8 @@
-use areion::{areion256_dm, areion512_dm, perm256, perm512};
+use areion::{areion256_dm, areion512_dm, areion512_md, perm256, perm512};
+use sha2::{Digest, Sha256};
 use std::arch::aarch64::vmovq_n_u8;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 fn perm(c: &mut Criterion) {
     unsafe {
@@ -25,5 +26,29 @@ fn dm(c: &mut Criterion) {
     }
 }
 
-criterion_group!(all, perm, dm);
+fn md(c: &mut Criterion) {
+    let mut g = c.benchmark_group("areion512-md");
+    for size in [64, 512, 1024, 1024 * 10, 1024 * 1024] {
+        g.throughput(criterion::Throughput::Bytes(size as u64));
+        g.bench_function(BenchmarkId::from_parameter(size), |b| {
+            let data = vec![0u8; size];
+            b.iter(|| areion512_md(&data))
+        });
+    }
+    g.finish()
+}
+
+fn sha256(c: &mut Criterion) {
+    let mut g = c.benchmark_group("sha256");
+    for size in [64, 512, 1024, 1024 * 10, 1024 * 1024] {
+        g.throughput(criterion::Throughput::Bytes(size as u64));
+        g.bench_function(BenchmarkId::from_parameter(size), |b| {
+            let data = vec![0u8; size];
+            b.iter(|| Sha256::new().chain_update(&data).finalize())
+        });
+    }
+    g.finish()
+}
+
+criterion_group!(all, perm, dm, md, sha256);
 criterion_main!(all);

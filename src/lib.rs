@@ -8,7 +8,6 @@ macro_rules! load {
     }};
 }
 
-#[cfg(test)]
 macro_rules! store {
     ($bytes:expr, $block:expr) => {{
         vst1q_u8($bytes.as_mut_ptr(), $block)
@@ -259,6 +258,41 @@ pub fn areion512_dm(
     }
 }
 
+static H0: [u8; 16] = hex!("6a09e667bb67ae853c6ef372a54ff53a");
+static H1: [u8; 16] = hex!("510e527f9b05688c1f83d9ab5be0cd19");
+
+// FIXME tragically underspecified, does not pass test vectors
+pub fn areion512_md(data: &[u8]) -> [u8; 32] {
+    unsafe {
+        let mut h0 = load!(H0);
+        let mut h1 = load!(H1);
+
+        let mut chunks = data.chunks_exact(32);
+        for chunk in chunks.by_ref() {
+            let m0 = load!(&chunk[..16]);
+            let m1 = load!(&chunk[16..]);
+            let (x0, x1) = areion512_dm(m0, m1, h0, h1);
+            h0 = vaddq_u8(h0, x0);
+            h1 = vaddq_u8(h1, x1);
+        }
+
+        let mut last = [0u8; 32];
+        let n = chunks.remainder().len();
+        last[..n].copy_from_slice(chunks.remainder());
+        last[n] = 0x80;
+        last[32 - 8..].copy_from_slice(&(data.len() as u64).to_be_bytes());
+
+        let m0 = load!(&last[..16]);
+        let m1 = load!(&last[16..]);
+
+        let (x0, x1) = areion512_dm(m0, m1, h0, h1);
+        store!(&mut last[..16], x0);
+        store!(&mut last[16..], x1);
+
+        last
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -457,6 +491,46 @@ mod tests {
                 19 0b 4d 0c 6c c1 03 c8 c1 aa a6 d3 d0 df db 98"#]]
             .assert_eq(&hex_fmt(&x_p));
         }
+    }
+
+    #[test]
+    fn areion512_md_test_vector_1() {
+        let data = hex!(
+            "
+            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+        );
+
+        expect![[r#"
+                47 dd 7f 2c 11 f3 05 e6 97 40 95 e3 c8 61 2f 6e
+                8d 09 bb ea 63 ef be 8d 84 55 8f cb f5 28 81 37"#]]
+        .assert_eq(&hex_fmt(&areion512_md(&data)));
+    }
+
+    #[test]
+    fn areion512_md_test_vector_2() {
+        let data = hex!(
+            "
+            00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f
+            10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f
+            20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f
+            30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f
+            40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f
+            50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f
+            60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f
+            70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f"
+        );
+
+        expect![[r#"
+                61 17 b5 9f 30 25 cd 4e 66 8b dc b3 66 bd 89 b9
+                06 0e 8d cf 67 0c bf 43 08 a8 96 86 8e bc c6 fc7"#]]
+        .assert_eq(&hex_fmt(&areion512_md(&data)));
     }
 
     fn hex_fmt(b: &[u8]) -> String {
