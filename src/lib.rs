@@ -1,97 +1,10 @@
-use core::arch::aarch64::*;
-use core::arch::asm;
 use hex_literal::hex;
 
-#[inline(always)]
-fn load(bytes: &[u8]) -> uint8x16_t {
-    unsafe { vld1q_u8(bytes.as_ptr()) }
-}
+#[cfg(target_arch = "aarch64")]
+mod aarch64;
 
-#[inline(always)]
-fn store(bytes: &mut [u8], block: uint8x16_t) {
-    unsafe { vst1q_u8(bytes.as_mut_ptr(), block) };
-}
-
-#[inline(always)]
-fn xor(a: uint8x16_t, b: uint8x16_t) -> uint8x16_t {
-    unsafe { veorq_u8(a, b) }
-}
-
-#[inline(always)]
-fn xor3(a: uint8x16_t, b: uint8x16_t, c: uint8x16_t) -> uint8x16_t {
-    // TODO replace with veor3q_u8 intrinsic when that's stable
-    #[target_feature(enable = "sha3")]
-    unsafe fn veor3q_u8(mut a: uint8x16_t, b: uint8x16_t, c: uint8x16_t) -> uint8x16_t {
-        asm!(
-            "EOR3 {0:v}.16B, {0:v}.16B, {1:v}.16B, {2:v}.16B",
-            inlateout(vreg) a, in(vreg) b, in(vreg) c,
-            options(pure, nomem, nostack, preserves_flags)
-        );
-        a
-    }
-    unsafe { veor3q_u8(a, b, c) }
-}
-
-#[inline(always)]
-fn enc(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
-    // TODO replace with vaeseq_u8 and vaesmcq_u8 instrinsics when that's stable
-    #[target_feature(enable = "aes")]
-    unsafe fn vaeseq_u8_and_vaesmcq_u8(mut state: uint8x16_t) -> uint8x16_t {
-        asm!(
-            "AESE {0:v}.16B, {1:v}.16B",
-            "AESMC {0:v}.16B, {0:v}.16B",
-            inlateout(vreg) state, in(vreg) 0,
-            options(pure, nomem, nostack, preserves_flags)
-        );
-        state
-    }
-    unsafe { xor(vaeseq_u8_and_vaesmcq_u8(state), round_key) }
-}
-
-#[inline(always)]
-fn enc_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
-    // TODO replace with vaeseq_u8 instrinsics when that's stable
-    #[target_feature(enable = "aes")]
-    unsafe fn vaeseq_u8(mut state: uint8x16_t) -> uint8x16_t {
-        asm!(
-            "AESE {0:v}.16B, {1:v}.16B",
-            inlateout(vreg) state, in(vreg) 0,
-            options(pure, nomem, nostack, preserves_flags)
-        );
-        state
-    }
-    unsafe { xor(vaeseq_u8(state), round_key) }
-}
-
-#[inline(always)]
-fn dec_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
-    // TODO replace with vaeseq_u8 instrinsics when that's stable
-    #[target_feature(enable = "aes")]
-    unsafe fn vaesdq_u8(mut state: uint8x16_t) -> uint8x16_t {
-        asm!(
-            "AESD {0:v}.16B, {1:v}.16B",
-            inlateout(vreg) state, in(vreg) 0,
-            options(pure, nomem, nostack, preserves_flags)
-        );
-        state
-    }
-    unsafe { xor(vaesdq_u8(state), round_key) }
-}
-
-#[inline(always)]
-fn inv_mix(state: uint8x16_t) -> uint8x16_t {
-    // TODO replace with vaesimcq_u8 instrinsics when that's stable
-    #[target_feature(enable = "aes")]
-    unsafe fn vaesimcq_u8(mut state: uint8x16_t) -> uint8x16_t {
-        asm!(
-            "AESIMC {0:v}.16B, {0:v}.16B",
-            inlateout(vreg) state,
-            options(pure, nomem, nostack, preserves_flags)
-        );
-        state
-    }
-    unsafe { vaesimcq_u8(state) }
-}
+#[cfg(target_arch = "aarch64")]
+use crate::aarch64::*;
 
 static RC0: [[u8; 16]; 24] = [
     hex!("886a3f24d308a3852e8a191344737003"),
@@ -123,14 +36,14 @@ static RC0: [[u8; 16]; 24] = [
 static RC1: [u8; 16] = hex!("00000000000000000000000000000000");
 
 #[inline(always)]
-fn round_256<const R: usize>(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
+fn round_256<const R: usize>(x0: Block, x1: Block) -> (Block, Block) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
     let (x1, x0) = (enc(enc(x0, rc0), x1), enc_last(x0, rc1));
     (x0, x1)
 }
 
-pub fn areion256(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
+pub fn areion256(x0: Block, x1: Block) -> (Block, Block) {
     let (x0, x1) = round_256::<0>(x0, x1);
     let (x1, x0) = round_256::<1>(x1, x0);
     let (x0, x1) = round_256::<2>(x0, x1);
@@ -145,7 +58,7 @@ pub fn areion256(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
 }
 
 #[inline(always)]
-fn inv_round_256<const R: usize>(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
+fn inv_round_256<const R: usize>(x0: Block, x1: Block) -> (Block, Block) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
     let x0 = dec_last(x0, rc1);
@@ -153,7 +66,7 @@ fn inv_round_256<const R: usize>(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t,
     (x0, x1)
 }
 
-pub fn inv_areion256(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
+pub fn inv_areion256(x0: Block, x1: Block) -> (Block, Block) {
     let (x1, x0) = inv_round_256::<9>(x1, x0);
     let (x0, x1) = inv_round_256::<8>(x0, x1);
     let (x1, x0) = inv_round_256::<7>(x1, x0);
@@ -169,11 +82,11 @@ pub fn inv_areion256(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t)
 
 #[inline(always)]
 fn round_512<const R: usize>(
-    x0: uint8x16_t,
-    x1: uint8x16_t,
-    x2: uint8x16_t,
-    x3: uint8x16_t,
-) -> (uint8x16_t, uint8x16_t, uint8x16_t, uint8x16_t) {
+    x0: Block,
+    x1: Block,
+    x2: Block,
+    x3: Block,
+) -> (Block, Block, Block, Block) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
     let x1 = enc(x0, x1);
@@ -183,12 +96,7 @@ fn round_512<const R: usize>(
     (x0, x1, x2, x3)
 }
 
-pub fn areion512(
-    x0: uint8x16_t,
-    x1: uint8x16_t,
-    x2: uint8x16_t,
-    x3: uint8x16_t,
-) -> (uint8x16_t, uint8x16_t, uint8x16_t, uint8x16_t) {
+pub fn areion512(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block, Block, Block) {
     let (x0, x1, x2, x3) = round_512::<0>(x0, x1, x2, x3);
     let (x1, x2, x3, x0) = round_512::<1>(x1, x2, x3, x0);
     let (x2, x3, x0, x1) = round_512::<2>(x2, x3, x0, x1);
@@ -209,11 +117,11 @@ pub fn areion512(
 
 #[inline(always)]
 fn inv_round_512<const R: usize>(
-    x0: uint8x16_t,
-    x1: uint8x16_t,
-    x2: uint8x16_t,
-    x3: uint8x16_t,
-) -> (uint8x16_t, uint8x16_t, uint8x16_t, uint8x16_t) {
+    x0: Block,
+    x1: Block,
+    x2: Block,
+    x3: Block,
+) -> (Block, Block, Block, Block) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
     let x0 = dec_last(x0, rc1);
@@ -223,12 +131,7 @@ fn inv_round_512<const R: usize>(
     (x0, x1, x2, x3)
 }
 
-pub fn inv_areion512(
-    x0: uint8x16_t,
-    x1: uint8x16_t,
-    x2: uint8x16_t,
-    x3: uint8x16_t,
-) -> (uint8x16_t, uint8x16_t, uint8x16_t, uint8x16_t) {
+pub fn inv_areion512(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block, Block, Block) {
     let (x2, x3, x0, x1) = inv_round_512::<14>(x2, x3, x0, x1);
     let (x1, x2, x3, x0) = inv_round_512::<13>(x1, x2, x3, x0);
     let (x0, x1, x2, x3) = inv_round_512::<12>(x0, x1, x2, x3);
@@ -247,17 +150,14 @@ pub fn inv_areion512(
     (x0, x1, x2, x3)
 }
 
-pub fn areion256_dm(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
+pub fn areion256_dm(x0: Block, x1: Block) -> (Block, Block) {
     let (x0_p, x1_p) = areion256(x0, x1);
     (xor(x0_p, x0), xor(x1_p, x1))
 }
 
-pub fn areion512_dm(
-    x0: uint8x16_t,
-    x1: uint8x16_t,
-    x2: uint8x16_t,
-    x3: uint8x16_t,
-) -> (uint8x16_t, uint8x16_t) {
+#[cfg(target_arch = "aarch64")]
+pub fn areion512_dm(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block) {
+    use core::arch::aarch64::*;
     unsafe {
         let (x0_p, x1_p, x2_p, x3_p) = areion512(x0, x1, x2, x3);
         let (x0_p, x1_p, x2_p, x3_p) = (xor(x0_p, x0), xor(x1_p, x1), xor(x2_p, x2), xor(x3_p, x3));
@@ -281,8 +181,10 @@ pub fn areion512_dm(
 static H0: [u8; 16] = hex!("6a09e667bb67ae853c6ef372a54ff53a");
 static H1: [u8; 16] = hex!("510e527f9b05688c1f83d9ab5be0cd19");
 
+#[cfg(target_arch = "aarch64")]
 // FIXME tragically underspecified, does not pass test vectors
 pub fn areion512_md(data: &[u8]) -> [u8; 32] {
+    use core::arch::aarch64::*;
     unsafe {
         let mut h0 = load(&H0);
         let mut h1 = load(&H1);
