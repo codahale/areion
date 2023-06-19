@@ -11,6 +11,27 @@ fn load(bytes: &[u8]) -> uint8x16_t {
 fn store(bytes: &mut [u8], block: uint8x16_t) {
     unsafe { vst1q_u8(bytes.as_mut_ptr(), block) };
 }
+
+#[inline(always)]
+fn xor(a: uint8x16_t, b: uint8x16_t) -> uint8x16_t {
+    unsafe { veorq_u8(a, b) }
+}
+
+#[inline(always)]
+fn xor3(a: uint8x16_t, b: uint8x16_t, c: uint8x16_t) -> uint8x16_t {
+    // TODO replace with veor3q_u8 intrinsic when that's stable
+    #[target_feature(enable = "sha3")]
+    unsafe fn veor3q_u8(mut a: uint8x16_t, b: uint8x16_t, c: uint8x16_t) -> uint8x16_t {
+        asm!(
+            "EOR3 {0:v}.16B, {0:v}.16B, {1:v}.16B, {2:v}.16B",
+            inlateout(vreg) a, in(vreg) b, in(vreg) c,
+            options(pure, nomem, nostack, preserves_flags)
+        );
+        a
+    }
+    unsafe { veor3q_u8(a, b, c) }
+}
+
 #[inline(always)]
 fn enc(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
     // TODO replace with vaeseq_u8 and vaesmcq_u8 instrinsics when that's stable
@@ -24,7 +45,7 @@ fn enc(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
         );
         state
     }
-    unsafe { veorq_u8(vaeseq_u8_and_vaesmcq_u8(state), round_key) }
+    unsafe { xor(vaeseq_u8_and_vaesmcq_u8(state), round_key) }
 }
 
 #[inline(always)]
@@ -39,7 +60,7 @@ fn enc_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
         );
         state
     }
-    unsafe { veorq_u8(vaeseq_u8(state), round_key) }
+    unsafe { xor(vaeseq_u8(state), round_key) }
 }
 
 #[inline(always)]
@@ -54,7 +75,7 @@ fn dec_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
         );
         state
     }
-    unsafe { veorq_u8(vaesdq_u8(state), round_key) }
+    unsafe { xor(vaesdq_u8(state), round_key) }
 }
 
 #[inline(always)]
@@ -227,10 +248,8 @@ pub fn inv_areion512(
 }
 
 pub fn areion256_dm(x0: uint8x16_t, x1: uint8x16_t) -> (uint8x16_t, uint8x16_t) {
-    unsafe {
-        let (x0_p, x1_p) = areion256(x0, x1);
-        (veorq_u8(x0_p, x0), veorq_u8(x1_p, x1))
-    }
+    let (x0_p, x1_p) = areion256(x0, x1);
+    (xor(x0_p, x0), xor(x1_p, x1))
 }
 
 pub fn areion512_dm(
@@ -241,12 +260,7 @@ pub fn areion512_dm(
 ) -> (uint8x16_t, uint8x16_t) {
     unsafe {
         let (x0_p, x1_p, x2_p, x3_p) = areion512(x0, x1, x2, x3);
-        let (x0_p, x1_p, x2_p, x3_p) = (
-            veorq_u8(x0_p, x0),
-            veorq_u8(x1_p, x1),
-            veorq_u8(x2_p, x2),
-            veorq_u8(x3_p, x3),
-        );
+        let (x0_p, x1_p, x2_p, x3_p) = (xor(x0_p, x0), xor(x1_p, x1), xor(x2_p, x2), xor(x3_p, x3));
 
         let mut x = [0u32; 16];
         vst1q_u32(x[..4].as_mut_ptr(), vreinterpretq_u32_u8(x0_p));
@@ -299,68 +313,58 @@ pub fn areion512_md(data: &[u8]) -> [u8; 32] {
     }
 }
 
-/// A single-key Even-Mansour block cipher using the Areion512 permutation.
-#[allow(clippy::too_many_arguments)]
-pub fn areion512_em(
-    k0: uint8x16_t,
-    k1: uint8x16_t,
-    k2: uint8x16_t,
-    k3: uint8x16_t,
-    mut x0: uint8x16_t,
-    mut x1: uint8x16_t,
-    mut x2: uint8x16_t,
-    mut x3: uint8x16_t,
-) -> (uint8x16_t, uint8x16_t, uint8x16_t, uint8x16_t) {
-    unsafe {
-        x0 = veorq_u8(x0, k0);
-        x1 = veorq_u8(x1, k1);
-        x2 = veorq_u8(x2, k2);
-        x3 = veorq_u8(x3, k3);
-    }
-    let (x0, x1, x2, x3) = areion512(x0, x1, x2, x3);
-    unsafe {
-        (
-            veorq_u8(x0, k0),
-            veorq_u8(x1, k1),
-            veorq_u8(x2, k2),
-            veorq_u8(x3, k3),
-        )
-    }
-}
-
 // A Matyas-Meyer-Oseas hash function using a single-key Even-Mansour block cipher based on the
 // Areion512 permutation.
 pub fn areion512_mmo(data: &[u8]) -> [u8; 64] {
-    let mut h0 = load(&H0);
-    let mut h1 = load(&H1);
-    let mut h2 = load(&H0);
-    let mut h3 = load(&H1);
+    // Initialize state with some constants unlikely to be nefarious.
+    let (mut h0, mut h1, mut h2, mut h3) = (
+        load(b"absentmindedness"),
+        load(b"abstemiousnesses"),
+        load(b"abstractednesses"),
+        load(b"acanthocephalans"),
+    );
 
+    // Break the message in 64-byte chunks.
     let mut chunks = data.chunks_exact(64);
-    for chunk in chunks.by_ref() {
-        let m0 = load(&chunk[..16]);
-        let m1 = load(&chunk[16..32]);
-        let m2 = load(&chunk[32..48]);
-        let m3 = load(&chunk[48..]);
-        (h0, h1, h2, h3) = areion512_em(h0, h1, h2, h3, m0, m1, m2, m3);
-    }
 
-    let mut last = [0u8; 64];
+    // Add MD-style message padding.
     let n = chunks.remainder().len();
+    let mut last = [0u8; 128];
     last[..n].copy_from_slice(chunks.remainder());
     last[n] = 0x80;
-    last[64 - 8..].copy_from_slice(&(data.len() as u64).to_be_bytes());
+    let last_chunks = if n <= 64 - 8 {
+        last[..64].chunks_exact(64)
+    } else {
+        last.chunks_exact(64)
+    };
 
-    let m0 = load(&last[..16]);
-    let m1 = load(&last[16..32]);
-    let m2 = load(&last[32..48]);
-    let m3 = load(&last[48..]);
+    // Iterate through the chunks, including the padding.
+    for chunk in chunks.by_ref().chain(last_chunks) {
+        // Load the chunk into vectors.
+        let (m0, m1, m2, m3) = (
+            load(&chunk[..16]),
+            load(&chunk[16..32]),
+            load(&chunk[32..48]),
+            load(&chunk[48..]),
+        );
 
-    (h0, h1, _, _) = areion512_em(h0, h1, h2, h3, m0, m1, m2, m3);
-    store(&mut last[..16], h0);
-    store(&mut last[16..], h1);
+        // H_i = E_{H_{i-1}}(m_i) ^ m_i
+        let (x0, x1, x2, x3) = areion512(xor(h0, m0), xor(h1, m1), xor(h2, m2), xor(h3, m3));
+        (h0, h1, h2, h3) = (
+            xor3(x0, h0, m0),
+            xor3(x1, h1, m1),
+            xor3(x2, h2, m2),
+            xor3(x3, h3, m3),
+        );
+    }
 
-    last
+    // Store the state vectors in the digest. Truncate if length extension attacks are a concern.
+    let mut digest = [0u8; 64];
+    store(&mut digest[..16], h0);
+    store(&mut digest[16..32], h1);
+    store(&mut digest[32..48], h2);
+    store(&mut digest[48..], h3);
+    digest
 }
 
 #[cfg(test)]

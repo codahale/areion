@@ -10,7 +10,7 @@ hex-literal = "0.4.1"
 criterion = "0.5.1"
 expect-test = "1.4.1"
 hex = "0.4.3"
-sha2 = { version = "0.10.6", default-features = false }
+sha2 = { version = "0.10.6", default-features = false, features = ["asm"] }
 
 [features]
 neon = ["sha2/asm"]
