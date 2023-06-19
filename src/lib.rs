@@ -494,6 +494,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "underspecified algorithm"]
     fn areion512_md_test_vector_1() {
         let data = hex!(
             "
@@ -514,6 +515,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "underspecified algorithm"]
     fn areion512_md_test_vector_2() {
         let data = hex!(
             "
