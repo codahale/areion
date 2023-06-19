@@ -6,6 +6,12 @@ mod aarch64;
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::*;
 
+#[cfg(target_arch = "x86_64")]
+mod x86_64;
+
+#[cfg(target_arch = "x86_64")]
+use crate::x86_64::*;
+
 static RC0: [[u8; 16]; 24] = [
     hex!("886a3f24d308a3852e8a191344737003"),
     hex!("223809a4d0319f2998fa2e08896c4eec"),
@@ -385,6 +391,7 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
+    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion256_dm_test_vector_1() {
         let x0 = load(&hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
@@ -400,6 +407,7 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
+    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion256_dm_test_vector_2() {
         let x0 = load(&hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
@@ -415,6 +423,7 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
+    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion512_dm_test_vector_1() {
         let x0 = load(&hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
@@ -432,6 +441,7 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
+    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion512_dm_test_vector_2() {
         let x0 = load(&hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
@@ -449,6 +459,7 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
+    #[cfg(target_arch = "aarch64")]
     #[test]
     #[ignore = "underspecified algorithm"]
     fn areion512_md_test_vector_1() {
@@ -470,6 +481,7 @@ mod tests {
         .assert_eq(&hex_fmt(&areion512_md(&data)));
     }
 
+    #[cfg(target_arch = "aarch64")]
     #[test]
     #[ignore = "underspecified algorithm"]
     fn areion512_md_test_vector_2() {
