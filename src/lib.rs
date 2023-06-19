@@ -293,6 +293,72 @@ pub fn areion512_md(data: &[u8]) -> [u8; 32] {
     }
 }
 
+/// A single-key Even-Mansour block cipher using the Areion512 permutation.
+#[allow(clippy::too_many_arguments)]
+pub fn areion512_em(
+    k0: uint8x16_t,
+    k1: uint8x16_t,
+    k2: uint8x16_t,
+    k3: uint8x16_t,
+    mut x0: uint8x16_t,
+    mut x1: uint8x16_t,
+    mut x2: uint8x16_t,
+    mut x3: uint8x16_t,
+) -> (uint8x16_t, uint8x16_t, uint8x16_t, uint8x16_t) {
+    unsafe {
+        x0 = veorq_u8(x0, k0);
+        x1 = veorq_u8(x1, k1);
+        x2 = veorq_u8(x2, k2);
+        x3 = veorq_u8(x3, k3);
+    }
+    let (x0, x1, x2, x3) = areion512(x0, x1, x2, x3);
+    unsafe {
+        (
+            veorq_u8(x0, k0),
+            veorq_u8(x1, k1),
+            veorq_u8(x2, k2),
+            veorq_u8(x3, k3),
+        )
+    }
+}
+
+// A Matyas-Meyer-Oseas hash function using a single-key Even-Mansour block cipher based on the
+// Areion512 permutation.
+pub fn areion512_mmo(data: &[u8]) -> [u8; 64] {
+    unsafe {
+        let mut h0 = load!(H0);
+        let mut h1 = load!(H1);
+        let mut h2 = load!(H0);
+        let mut h3 = load!(H1);
+
+        let mut chunks = data.chunks_exact(64);
+        for chunk in chunks.by_ref() {
+            let m0 = load!(&chunk[..16]);
+            let m1 = load!(&chunk[16..32]);
+            let m2 = load!(&chunk[32..48]);
+            let m3 = load!(&chunk[48..]);
+            (h0, h1, h2, h3) = areion512_em(h0, h1, h2, h3, m0, m1, m2, m3);
+        }
+
+        let mut last = [0u8; 64];
+        let n = chunks.remainder().len();
+        last[..n].copy_from_slice(chunks.remainder());
+        last[n] = 0x80;
+        last[64 - 8..].copy_from_slice(&(data.len() as u64).to_be_bytes());
+
+        let m0 = load!(&last[..16]);
+        let m1 = load!(&last[16..32]);
+        let m2 = load!(&last[32..48]);
+        let m3 = load!(&last[48..]);
+
+        (h0, h1, _, _) = areion512_em(h0, h1, h2, h3, m0, m1, m2, m3);
+        store!(&mut last[..16], h0);
+        store!(&mut last[16..], h1);
+
+        last
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

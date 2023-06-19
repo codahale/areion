@@ -1,4 +1,4 @@
-use areion::{areion256, areion256_dm, areion512, areion512_dm, areion512_md};
+use areion::{areion256, areion256_dm, areion512, areion512_dm, areion512_md, areion512_mmo};
 use sha2::{Digest, Sha256};
 use std::arch::aarch64::vmovq_n_u8;
 
@@ -38,6 +38,18 @@ fn md(c: &mut Criterion) {
     g.finish()
 }
 
+fn mmo(c: &mut Criterion) {
+    let mut g = c.benchmark_group("areion512-mmo");
+    for size in [64, 512, 1024, 1024 * 10, 1024 * 1024] {
+        g.throughput(criterion::Throughput::Bytes(size as u64));
+        g.bench_function(BenchmarkId::from_parameter(size), |b| {
+            let data = vec![0u8; size];
+            b.iter(|| areion512_mmo(&data))
+        });
+    }
+    g.finish()
+}
+
 fn sha256(c: &mut Criterion) {
     let mut g = c.benchmark_group("sha256");
     for size in [64, 512, 1024, 1024 * 10, 1024 * 1024] {
@@ -50,5 +62,5 @@ fn sha256(c: &mut Criterion) {
     g.finish()
 }
 
-criterion_group!(all, perm, dm, md, sha256);
+criterion_group!(all, perm, dm, md, sha256, mmo);
 criterion_main!(all);
