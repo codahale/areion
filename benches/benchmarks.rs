@@ -10,8 +10,10 @@ fn perm(c: &mut Criterion) {
         let x1 = vmovq_n_u8(0);
         let x2 = vmovq_n_u8(0);
         let x3 = vmovq_n_u8(0);
+        let mut state = [0u64; 25];
         c.bench_function("perm256", |b| b.iter(|| areion256(x0, x1)));
         c.bench_function("perm512", |b| b.iter(|| areion512(x0, x1, x2, x3)));
+        c.bench_function("perm_keccak", |b| b.iter(|| keccak::f1600(&mut state)));
     }
 }
 
