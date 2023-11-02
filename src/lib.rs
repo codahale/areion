@@ -12,6 +12,34 @@ mod x86_64;
 #[cfg(target_arch = "x86_64")]
 use crate::x86_64::*;
 
+#[inline]
+#[allow(clippy::identity_op)]
+unsafe fn simpira_f<const C: u32, const B: u32>(x: Block) -> Block {
+    let c = load_32x4(0x00 ^ C ^ B, 0x10 ^ C ^ B, 0x20 ^ C ^ B, 0x30 ^ C ^ B);
+    enc(enc(x, c), zero())
+}
+
+pub fn simpira_v2_b2(mut x0: Block, mut x1: Block) -> (Block, Block) {
+    unsafe {
+        (x0, x1) = (xor(simpira_f::<1, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<2, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<3, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<4, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<5, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<6, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<7, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<8, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<9, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<10, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<11, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<12, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<13, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<14, 2>(x0), x1), x0);
+        (x0, x1) = (xor(simpira_f::<15, 2>(x0), x1), x0);
+        (x0, x1)
+    }
+}
+
 static RC0: [[u8; 16]; 24] = [
     hex!("886a3f24d308a3852e8a191344737003"),
     hex!("223809a4d0319f2998fa2e08896c4eec"),
@@ -184,12 +212,11 @@ pub fn areion512_dm(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block
     }
 }
 
-static H0: [u8; 16] = hex!("6a09e667bb67ae853c6ef372a54ff53a");
-static H1: [u8; 16] = hex!("510e527f9b05688c1f83d9ab5be0cd19");
-
 #[cfg(target_arch = "aarch64")]
 // FIXME tragically underspecified, does not pass test vectors
 pub fn areion512_md(data: &[u8]) -> [u8; 32] {
+    static H0: [u8; 16] = hex!("6a09e667bb67ae853c6ef372a54ff53a");
+    static H1: [u8; 16] = hex!("510e527f9b05688c1f83d9ab5be0cd19");
     use core::arch::aarch64::*;
     unsafe {
         let mut h0 = load(&H0);
