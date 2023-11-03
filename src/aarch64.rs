@@ -56,45 +56,15 @@ pub fn enc(state: Block, round_key: Block) -> Block {
 
 #[inline]
 pub fn enc_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
-    // TODO replace with vaeseq_u8 instrinsics when that's stable
-    #[target_feature(enable = "aes")]
-    unsafe fn vaeseq_u8(mut state: uint8x16_t) -> uint8x16_t {
-        asm!(
-            "AESE {0:v}.16B, {1:v}.16B",
-            inlateout(vreg) state, in(vreg) 0,
-            options(pure, nomem, nostack, preserves_flags)
-        );
-        state
-    }
-    unsafe { xor(vaeseq_u8(state), round_key) }
+    unsafe { xor(vaeseq_u8(state, zero()), round_key) }
 }
 
 #[inline]
 pub fn dec_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
-    // TODO replace with vaeseq_u8 instrinsics when that's stable
-    #[target_feature(enable = "aes")]
-    unsafe fn vaesdq_u8(mut state: uint8x16_t) -> uint8x16_t {
-        asm!(
-            "AESD {0:v}.16B, {1:v}.16B",
-            inlateout(vreg) state, in(vreg) 0,
-            options(pure, nomem, nostack, preserves_flags)
-        );
-        state
-    }
-    unsafe { xor(vaesdq_u8(state), round_key) }
+    unsafe { xor(vaesdq_u8(state, zero()), round_key) }
 }
 
 #[inline]
 pub fn inv_mix(state: uint8x16_t) -> uint8x16_t {
-    // TODO replace with vaesimcq_u8 instrinsics when that's stable
-    #[target_feature(enable = "aes")]
-    unsafe fn vaesimcq_u8(mut state: uint8x16_t) -> uint8x16_t {
-        asm!(
-            "AESIMC {0:v}.16B, {0:v}.16B",
-            inlateout(vreg) state,
-            options(pure, nomem, nostack, preserves_flags)
-        );
-        state
-    }
     unsafe { vaesimcq_u8(state) }
 }
