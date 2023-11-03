@@ -18,22 +18,22 @@ pub fn zero() -> uint8x16_t {
     unsafe { vmovq_n_u8(0) }
 }
 
-#[inline(always)]
+#[inline]
 pub fn load(bytes: &[u8]) -> uint8x16_t {
     unsafe { vld1q_u8(bytes.as_ptr()) }
 }
 
-#[inline(always)]
+#[inline]
 pub fn store(bytes: &mut [u8], block: uint8x16_t) {
     unsafe { vst1q_u8(bytes.as_mut_ptr(), block) };
 }
 
-#[inline(always)]
+#[inline]
 pub fn xor(a: uint8x16_t, b: uint8x16_t) -> uint8x16_t {
     unsafe { veorq_u8(a, b) }
 }
 
-#[inline(always)]
+#[inline]
 pub fn xor3(a: uint8x16_t, b: uint8x16_t, c: uint8x16_t) -> uint8x16_t {
     // TODO replace with veor3q_u8 intrinsic when that's stable
     #[target_feature(enable = "sha3")]
@@ -48,7 +48,7 @@ pub fn xor3(a: uint8x16_t, b: uint8x16_t, c: uint8x16_t) -> uint8x16_t {
     unsafe { veor3q_u8(a, b, c) }
 }
 
-#[inline(always)]
+#[inline]
 pub fn enc(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
     // TODO replace with vaeseq_u8 and vaesmcq_u8 instrinsics when that's stable
     #[target_feature(enable = "aes")]
@@ -64,7 +64,7 @@ pub fn enc(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
     unsafe { xor(vaeseq_u8_and_vaesmcq_u8(state), round_key) }
 }
 
-#[inline(always)]
+#[inline]
 pub fn enc_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
     // TODO replace with vaeseq_u8 instrinsics when that's stable
     #[target_feature(enable = "aes")]
@@ -79,7 +79,7 @@ pub fn enc_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
     unsafe { xor(vaeseq_u8(state), round_key) }
 }
 
-#[inline(always)]
+#[inline]
 pub fn dec_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
     // TODO replace with vaeseq_u8 instrinsics when that's stable
     #[target_feature(enable = "aes")]
@@ -94,7 +94,7 @@ pub fn dec_last(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
     unsafe { xor(vaesdq_u8(state), round_key) }
 }
 
-#[inline(always)]
+#[inline]
 pub fn inv_mix(state: uint8x16_t) -> uint8x16_t {
     // TODO replace with vaesimcq_u8 instrinsics when that's stable
     #[target_feature(enable = "aes")]

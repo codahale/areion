@@ -71,7 +71,7 @@ static RC0: [[u8; 16]; 24] = [
 
 static RC1: [u8; 16] = hex!("00000000000000000000000000000000");
 
-#[inline(always)]
+#[inline]
 fn round_256<const R: usize>(x0: Block, x1: Block) -> (Block, Block) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
@@ -93,7 +93,7 @@ pub fn areion256(x0: Block, x1: Block) -> (Block, Block) {
     (x0, x1)
 }
 
-#[inline(always)]
+#[inline]
 fn inv_round_256<const R: usize>(x0: Block, x1: Block) -> (Block, Block) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
@@ -116,7 +116,7 @@ pub fn inv_areion256(x0: Block, x1: Block) -> (Block, Block) {
     (x0, x1)
 }
 
-#[inline(always)]
+#[inline]
 fn round_512<const R: usize>(
     x0: Block,
     x1: Block,
@@ -151,7 +151,7 @@ pub fn areion512(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block, B
     (x0, x1, x2, x3)
 }
 
-#[inline(always)]
+#[inline]
 fn inv_round_512<const R: usize>(
     x0: Block,
     x1: Block,
