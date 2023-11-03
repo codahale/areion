@@ -48,20 +48,10 @@ pub fn xor3(a: uint8x16_t, b: uint8x16_t, c: uint8x16_t) -> uint8x16_t {
     unsafe { veor3q_u8(a, b, c) }
 }
 
+/// Perform one AES round on the given state using the given round key.
 #[inline]
-pub fn enc(state: uint8x16_t, round_key: uint8x16_t) -> uint8x16_t {
-    // TODO replace with vaeseq_u8 and vaesmcq_u8 instrinsics when that's stable
-    #[target_feature(enable = "aes")]
-    unsafe fn vaeseq_u8_and_vaesmcq_u8(mut state: uint8x16_t) -> uint8x16_t {
-        asm!(
-            "AESE {0:v}.16B, {1:v}.16B",
-            "AESMC {0:v}.16B, {0:v}.16B",
-            inlateout(vreg) state, in(vreg) 0,
-            options(pure, nomem, nostack, preserves_flags)
-        );
-        state
-    }
-    unsafe { xor(vaeseq_u8_and_vaesmcq_u8(state), round_key) }
+pub fn enc(state: Block, round_key: Block) -> Block {
+    unsafe { veorq_u8(vaesmcq_u8(vaeseq_u8(state, zero())), round_key) }
 }
 
 #[inline]
