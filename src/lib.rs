@@ -251,6 +251,43 @@ pub fn areion512_md(data: &[u8]) -> [u8; 32] {
 }
 
 // A Matyas-Meyer-Oseas hash function using a single-key Even-Mansour block cipher based on the
+// Areion256 permutation.
+pub fn areion256_mmo(data: &[u8]) -> [u8; 32] {
+    // Initialize state with some constants unlikely to be nefarious.
+    let (mut h0, mut h1) = (load(b"absentmindedness"), load(b"abstemiousnesses"));
+
+    // Break the message in 32-byte chunks.
+    let mut chunks = data.chunks_exact(32);
+
+    // Add MD-style message padding.
+    let n = chunks.remainder().len();
+    let mut last = [0u8; 64];
+    last[..n].copy_from_slice(chunks.remainder());
+    last[n] = 0x80;
+    let last_chunks = if n <= 32 - 8 {
+        last[..32].chunks_exact(32)
+    } else {
+        last.chunks_exact(32)
+    };
+
+    // Iterate through the chunks, including the padding.
+    for chunk in chunks.by_ref().chain(last_chunks) {
+        // Load the chunk into vectors.
+        let (m0, m1) = (load(&chunk[..16]), load(&chunk[16..]));
+
+        // H_i = E_{H_{i-1}}(m_i) ^ m_i
+        let (x0, x1) = areion256(xor(h0, m0), xor(h1, m1));
+        (h0, h1) = (xor3(x0, h0, m0), xor3(x1, h1, m1));
+    }
+
+    // Store the state vectors in the digest. Truncate if length extension attacks are a concern.
+    let mut digest = [0u8; 32];
+    store(&mut digest[..16], h0);
+    store(&mut digest[16..], h1);
+    digest
+}
+
+// A Matyas-Meyer-Oseas hash function using a single-key Even-Mansour block cipher based on the
 // Areion512 permutation.
 pub fn areion512_mmo(data: &[u8]) -> [u8; 64] {
     // Initialize state with some constants unlikely to be nefarious.

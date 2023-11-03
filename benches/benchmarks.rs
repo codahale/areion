@@ -61,6 +61,14 @@ fn areion512_md<const LEN: usize>(bencher: divan::Bencher) {
 }
 
 #[divan::bench(consts = LENS)]
+fn areion256_mmo<const LEN: usize>(bencher: divan::Bencher) {
+    bencher
+        .with_inputs(|| vec![0u8; LEN])
+        .counter(BytesCount::new(LEN))
+        .bench_refs(|block| areion::areion256_mmo(block));
+}
+
+#[divan::bench(consts = LENS)]
 fn areion512_mmo<const LEN: usize>(bencher: divan::Bencher) {
     bencher
         .with_inputs(|| vec![0u8; LEN])
