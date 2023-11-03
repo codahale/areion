@@ -22,9 +22,8 @@ permutation.
 
 ## Performance
 
-In general, it's slower than properly-accelerated SHA256 on both aarch64 and x86_64. On the M1, the
-MMO hash is ~1.9 GB/sec, but SHA256 (using the `sha2` feature) is ~2.1 GB/sec. On x86_64, it's much
-slower.
+In general, it's about as fast as properly-accelerated SHA256 on aarch64 and about 1.7x as fast as
+SHA256 on x86_64.
 
 ## License
 
