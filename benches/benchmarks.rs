@@ -1,7 +1,7 @@
 use divan::counter::BytesCount;
 use divan::Bencher;
 use sha2::digest::Digest;
-use sha2::Sha256;
+use sha2::{Sha256, Sha512};
 
 #[divan::bench(counters = [BytesCount::new(32usize)])]
 fn areion256(b: Bencher) {
@@ -82,6 +82,14 @@ fn sha256<const LEN: usize>(bencher: divan::Bencher) {
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))
         .bench_refs(|block| Sha256::new().chain_update(block).finalize());
+}
+
+#[divan::bench(consts = LENS)]
+fn sha512<const LEN: usize>(bencher: divan::Bencher) {
+    bencher
+        .with_inputs(|| vec![0u8; LEN])
+        .counter(BytesCount::new(LEN))
+        .bench_refs(|block| Sha512::new().chain_update(block).finalize());
 }
 
 fn main() {
