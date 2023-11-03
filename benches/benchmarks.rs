@@ -1,43 +1,51 @@
-#[cfg(target_arch = "aarch64")]
-use std::arch::aarch64::vmovq_n_u8;
-
 use divan::counter::BytesCount;
 use divan::Bencher;
 use sha2::digest::Digest;
 use sha2::Sha256;
 
-#[cfg(target_arch = "aarch64")]
 #[divan::bench(counters = [BytesCount::new(32usize)])]
 fn areion256(b: Bencher) {
-    b.with_inputs(|| unsafe { (vmovq_n_u8(0), vmovq_n_u8(0)) })
+    b.with_inputs(|| (areion::zero(), areion::zero()))
         .bench_values(|(x0, x1)| areion::areion256(x0, x1))
 }
 
-#[cfg(target_arch = "aarch64")]
 #[divan::bench(counters = [BytesCount::new(64usize)])]
 fn areion512(b: Bencher) {
-    b.with_inputs(|| unsafe { (vmovq_n_u8(0), vmovq_n_u8(0), vmovq_n_u8(0), vmovq_n_u8(0)) })
-        .bench_values(|(x0, x1, x2, x3)| areion::areion512(x0, x1, x2, x3))
+    b.with_inputs(|| {
+        (
+            areion::zero(),
+            areion::zero(),
+            areion::zero(),
+            areion::zero(),
+        )
+    })
+    .bench_values(|(x0, x1, x2, x3)| areion::areion512(x0, x1, x2, x3))
 }
 
 #[cfg(target_arch = "aarch64")]
 #[divan::bench(counters = [BytesCount::new(32usize)])]
 fn areion256_dm(b: Bencher) {
-    b.with_inputs(|| unsafe { (vmovq_n_u8(0), vmovq_n_u8(0)) })
+    b.with_inputs(|| (areion::zero(), areion::zero()))
         .bench_values(|(x0, x1)| areion::areion256_dm(x0, x1))
 }
 
 #[cfg(target_arch = "aarch64")]
 #[divan::bench(counters = [BytesCount::new(64usize)])]
 fn areion512_dm(b: Bencher) {
-    b.with_inputs(|| unsafe { (vmovq_n_u8(0), vmovq_n_u8(0), vmovq_n_u8(0), vmovq_n_u8(0)) })
-        .bench_values(|(x0, x1, x2, x3)| areion::areion512_dm(x0, x1, x2, x3))
+    b.with_inputs(|| {
+        (
+            areion::zero(),
+            areion::zero(),
+            areion::zero(),
+            areion::zero(),
+        )
+    })
+    .bench_values(|(x0, x1, x2, x3)| areion::areion512_dm(x0, x1, x2, x3))
 }
 
-#[cfg(target_arch = "aarch64")]
 #[divan::bench(counters = [BytesCount::new(32usize)])]
 fn simpira_v2_b2(b: Bencher) {
-    b.with_inputs(|| unsafe { (vmovq_n_u8(0), vmovq_n_u8(0)) })
+    b.with_inputs(|| (areion::zero(), areion::zero()))
         .bench_values(|(x0, x1)| areion::simpira_v2_b2(x0, x1))
 }
 

@@ -4,13 +4,15 @@ use hex_literal::hex;
 mod aarch64;
 
 #[cfg(target_arch = "aarch64")]
-use crate::aarch64::*;
+use crate::aarch64::{self as internal, *};
 
 #[cfg(target_arch = "x86_64")]
 mod x86_64;
 
 #[cfg(target_arch = "x86_64")]
-use crate::x86_64::*;
+use crate::x86_64::{self as internal, *};
+
+pub use internal::zero;
 
 #[inline]
 #[allow(clippy::identity_op)]
