@@ -1,3 +1,4 @@
+use areion::Areion512Md;
 use divan::counter::BytesCount;
 use divan::Bencher;
 use sha2::digest::Digest;
@@ -51,13 +52,13 @@ fn simpira_v2_b2(b: Bencher) {
 
 const LENS: &[usize] = &[16, 256, 1024, 16 * 1024, 1024 * 1024];
 
-#[cfg(target_arch = "aarch64")]
 #[divan::bench(consts = LENS)]
 fn areion512_md<const LEN: usize>(bencher: divan::Bencher) {
+    use digest::Digest;
     bencher
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))
-        .bench_refs(|block| areion::areion512_md(block));
+        .bench_refs(|block| Areion512Md::default().chain_update(block).finalize());
 }
 
 #[divan::bench(consts = LENS)]

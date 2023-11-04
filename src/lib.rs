@@ -13,6 +13,8 @@ mod x86_64;
 use crate::x86_64::{self as internal, *};
 
 pub use internal::zero;
+mod areion_md;
+pub use crate::areion_md::Areion512Md;
 
 #[inline]
 #[allow(clippy::identity_op)]

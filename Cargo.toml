@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+digest = { version = "0.10.7", default-features = false, features = ["block-buffer", "core-api"] }
 hex-literal = "0.4.1"
 
 [dev-dependencies]
