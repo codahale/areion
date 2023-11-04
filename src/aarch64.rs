@@ -4,6 +4,11 @@ use core::arch::asm;
 pub use core::arch::aarch64::uint8x16_t as Block;
 
 #[inline]
+pub fn load_64x2(a: u64, b: u64) -> Block {
+    unsafe { vreinterpretq_u8_u64(vsetq_lane_u64(b, vmovq_n_u64(a), 1)) }
+}
+
+#[inline]
 pub fn load_32x4(a: u32, b: u32, c: u32, d: u32) -> uint8x16_t {
     unsafe {
         vreinterpretq_u8_u32(vsetq_lane_u32::<3>(

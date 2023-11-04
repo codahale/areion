@@ -1,4 +1,4 @@
-use areion::Areion512Md;
+use areion::{Areion512Md, Areion512Mmo};
 use divan::counter::BytesCount;
 use divan::Bencher;
 use sha2::digest::Digest;
@@ -71,10 +71,11 @@ fn areion256_mmo<const LEN: usize>(bencher: divan::Bencher) {
 
 #[divan::bench(consts = LENS)]
 fn areion512_mmo<const LEN: usize>(bencher: divan::Bencher) {
+    use digest::Digest;
     bencher
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))
-        .bench_refs(|block| areion::areion512_mmo(block));
+        .bench_refs(|block| Areion512Mmo::default().chain_update(block).finalize());
 }
 
 #[divan::bench(consts = LENS)]

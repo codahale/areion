@@ -11,11 +11,7 @@ hex-literal = "0.4.1"
 divan = "0.1.2"
 expect-test = "1.4.1"
 hex = "0.4.3"
-keccak = { version = "0.1.4", features = ["asm"] }
 sha2 = { version = "0.10.6", default-features = false, features = ["asm"] }
-
-[features]
-neon = ["sha2/asm"]
 
 [[bench]]
 name = "benchmarks"

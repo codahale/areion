@@ -14,7 +14,9 @@ use crate::x86_64::{self as internal, *};
 
 pub use internal::zero;
 mod areion_md;
+mod areion_mmo;
 pub use crate::areion_md::Areion512Md;
+pub use crate::areion_mmo::Areion512Mmo;
 
 #[inline]
 #[allow(clippy::identity_op)]
