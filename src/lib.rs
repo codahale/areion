@@ -13,8 +13,13 @@ mod x86_64;
 use crate::x86_64::{self as internal, *};
 
 pub use internal::zero;
+
+#[cfg(target_arch = "aarch64")]
 mod areion_md;
+
 mod areion_mmo;
+
+#[cfg(target_arch = "aarch64")]
 pub use crate::areion_md::Areion512Md;
 pub use crate::areion_mmo::Areion512Mmo;
 
@@ -218,136 +223,11 @@ pub fn areion512_dm(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block
     }
 }
 
-#[cfg(target_arch = "aarch64")]
-// FIXME tragically underspecified, does not pass test vectors
-pub fn areion512_md(data: &[u8]) -> [u8; 32] {
-    static H0: [u8; 16] = hex!("6a09e667bb67ae853c6ef372a54ff53a");
-    static H1: [u8; 16] = hex!("510e527f9b05688c1f83d9ab5be0cd19");
-    use core::arch::aarch64::*;
-    unsafe {
-        let mut h0 = load(&H0);
-        let mut h1 = load(&H1);
-
-        let mut chunks = data.chunks_exact(32);
-        for chunk in chunks.by_ref() {
-            let m0 = load(&chunk[..16]);
-            let m1 = load(&chunk[16..]);
-            let (x0, x1) = areion512_dm(m0, m1, h0, h1);
-            h0 = vaddq_u8(h0, x0);
-            h1 = vaddq_u8(h1, x1);
-        }
-
-        let mut last = [0u8; 32];
-        let n = chunks.remainder().len();
-        last[..n].copy_from_slice(chunks.remainder());
-        last[n] = 0x80;
-        last[32 - 8..].copy_from_slice(&(data.len() as u64).to_be_bytes());
-
-        let m0 = load(&last[..16]);
-        let m1 = load(&last[16..]);
-
-        let (x0, x1) = areion512_dm(m0, m1, h0, h1);
-        store(&mut last[..16], x0);
-        store(&mut last[16..], x1);
-
-        last
-    }
-}
-
-// A Matyas-Meyer-Oseas hash function using a single-key Even-Mansour block cipher based on the
-// Areion256 permutation.
-pub fn areion256_mmo(data: &[u8]) -> [u8; 32] {
-    // Initialize state with some constants unlikely to be nefarious.
-    let (mut h0, mut h1) = (load(b"absentmindedness"), load(b"abstemiousnesses"));
-
-    // Break the message in 32-byte chunks.
-    let mut chunks = data.chunks_exact(32);
-
-    // Add MD-style message padding.
-    let n = chunks.remainder().len();
-    let mut last = [0u8; 64];
-    last[..n].copy_from_slice(chunks.remainder());
-    last[n] = 0x80;
-    let last_chunks = if n <= 32 - 8 {
-        last[..32].chunks_exact(32)
-    } else {
-        last.chunks_exact(32)
-    };
-
-    // Iterate through the chunks, including the padding.
-    for chunk in chunks.by_ref().chain(last_chunks) {
-        // Load the chunk into vectors.
-        let (m0, m1) = (load(&chunk[..16]), load(&chunk[16..]));
-
-        // H_i = E_{H_{i-1}}(m_i) ^ m_i
-        let (x0, x1) = areion256(xor(h0, m0), xor(h1, m1));
-        (h0, h1) = (xor3(x0, h0, m0), xor3(x1, h1, m1));
-    }
-
-    // Store the state vectors in the digest. Truncate if length extension attacks are a concern.
-    let mut digest = [0u8; 32];
-    store(&mut digest[..16], h0);
-    store(&mut digest[16..], h1);
-    digest
-}
-
-// A Matyas-Meyer-Oseas hash function using a single-key Even-Mansour block cipher based on the
-// Areion512 permutation.
-pub fn areion512_mmo(data: &[u8]) -> [u8; 64] {
-    // Initialize state with some constants unlikely to be nefarious.
-    let (mut h0, mut h1, mut h2, mut h3) = (
-        load(b"absentmindedness"),
-        load(b"abstemiousnesses"),
-        load(b"abstractednesses"),
-        load(b"acanthocephalans"),
-    );
-
-    // Break the message in 64-byte chunks.
-    let mut chunks = data.chunks_exact(64);
-
-    // Add MD-style message padding.
-    let n = chunks.remainder().len();
-    let mut last = [0u8; 128];
-    last[..n].copy_from_slice(chunks.remainder());
-    last[n] = 0x80;
-    let last_chunks = if n <= 64 - 8 {
-        last[..64].chunks_exact(64)
-    } else {
-        last.chunks_exact(64)
-    };
-
-    // Iterate through the chunks, including the padding.
-    for chunk in chunks.by_ref().chain(last_chunks) {
-        // Load the chunk into vectors.
-        let (m0, m1, m2, m3) = (
-            load(&chunk[..16]),
-            load(&chunk[16..32]),
-            load(&chunk[32..48]),
-            load(&chunk[48..]),
-        );
-
-        // H_i = E_{H_{i-1}}(m_i) ^ m_i
-        let (x0, x1, x2, x3) = areion512(xor(h0, m0), xor(h1, m1), xor(h2, m2), xor(h3, m3));
-        (h0, h1, h2, h3) = (
-            xor3(x0, h0, m0),
-            xor3(x1, h1, m1),
-            xor3(x2, h2, m2),
-            xor3(x3, h3, m3),
-        );
-    }
-
-    // Store the state vectors in the digest. Truncate if length extension attacks are a concern.
-    let mut digest = [0u8; 64];
-    store(&mut digest[..16], h0);
-    store(&mut digest[16..32], h1);
-    store(&mut digest[32..48], h2);
-    store(&mut digest[48..], h3);
-    digest
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use digest::Digest;
     use expect_test::expect;
     use hex_literal::hex;
 
@@ -548,7 +428,9 @@ mod tests {
         expect![[r#"
                 47 dd 7f 2c 11 f3 05 e6 97 40 95 e3 c8 61 2f 6e
                 8d 09 bb ea 63 ef be 8d 84 55 8f cb f5 28 81 37"#]]
-        .assert_eq(&hex_fmt(&areion512_md(&data)));
+        .assert_eq(&hex_fmt(
+            &Areion512Md::default().chain_update(data).finalize(),
+        ));
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -570,7 +452,9 @@ mod tests {
         expect![[r#"
                 61 17 b5 9f 30 25 cd 4e 66 8b dc b3 66 bd 89 b9
                 06 0e 8d cf 67 0c bf 43 08 a8 96 86 8e bc c6 fc7"#]]
-        .assert_eq(&hex_fmt(&areion512_md(&data)));
+        .assert_eq(&hex_fmt(
+            &Areion512Md::default().chain_update(data).finalize(),
+        ));
     }
 
     fn hex_fmt(b: &[u8]) -> String {
