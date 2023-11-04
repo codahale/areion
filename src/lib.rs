@@ -227,6 +227,7 @@ pub fn areion512_dm(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block
 mod tests {
     use super::*;
 
+    #[cfg(target_arch = "aarch64")]
     use digest::Digest;
     use expect_test::expect;
     use hex_literal::hex;

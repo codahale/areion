@@ -8,7 +8,7 @@ pub fn zero() -> Block {
 }
 
 #[inline]
-pub fn load_64x2(a: u64, b: u64) -> AesBlock {
+pub fn load_64x2(a: u64, b: u64) -> Block {
     unsafe { _mm_set_epi64x(b as i64, a as i64) }
 }
 
