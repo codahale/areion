@@ -12,7 +12,7 @@ use digest::core_api::{
 };
 use digest::crypto_common::AlgorithmName;
 use digest::generic_array::GenericArray;
-use digest::typenum::{Unsigned, U32, U64};
+use digest::typenum::{Unsigned, U32};
 use digest::{HashMarker, Output, OutputSizeUser, Reset};
 use hex_literal::hex;
 
@@ -57,7 +57,7 @@ impl BufferKindUser for Core {
 }
 
 impl OutputSizeUser for Core {
-    type OutputSize = U64;
+    type OutputSize = U32;
 }
 
 impl UpdateCore for Core {
