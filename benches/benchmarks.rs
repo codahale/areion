@@ -104,6 +104,14 @@ fn sha256<const LEN: usize>(bencher: divan::Bencher) {
 }
 
 #[divan::bench(consts = LENS)]
+fn blake3<const LEN: usize>(bencher: divan::Bencher) {
+    bencher
+        .with_inputs(|| vec![0u8; LEN])
+        .counter(BytesCount::new(LEN))
+        .bench_refs(|block| blake3::hash(block));
+}
+
+#[divan::bench(consts = LENS)]
 fn sha512<const LEN: usize>(bencher: divan::Bencher) {
     bencher
         .with_inputs(|| vec![0u8; LEN])
