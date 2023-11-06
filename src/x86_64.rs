@@ -14,14 +14,7 @@ pub fn load_64x2(a: u64, b: u64) -> AesBlock {
 
 #[inline]
 pub fn load_32x4(a: u32, b: u32, c: u32, d: u32) -> AesBlock {
-    unsafe {
-        _mm_set_epi32(
-            d.try_into().unwrap(),
-            c.try_into().unwrap(),
-            b.try_into().unwrap(),
-            a.try_into().unwrap(),
-        )
-    }
+    unsafe { _mm_set_epi32(d as i32, c as i32, b as i32, a as i32) }
 }
 
 #[inline]
