@@ -80,7 +80,7 @@ fn areion512_mmo<const LEN: usize>(bencher: divan::Bencher) {
 }
 
 #[divan::bench(consts = LENS)]
-fn areion256sponge<const LEN: usize>(bencher: divan::Bencher) {
+fn areion256_512_sponge<const LEN: usize>(bencher: divan::Bencher) {
     bencher
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))
@@ -88,7 +88,7 @@ fn areion256sponge<const LEN: usize>(bencher: divan::Bencher) {
 }
 
 #[divan::bench(consts = LENS)]
-fn areion512haifa<const LEN: usize>(bencher: divan::Bencher) {
+fn areion512_haifa<const LEN: usize>(bencher: divan::Bencher) {
     bencher
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))

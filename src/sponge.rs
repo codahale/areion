@@ -89,7 +89,7 @@ impl Reset for Core {
 impl AlgorithmName for Core {
     #[inline]
     fn write_alg_name(f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("Areion-256-Sponge")
+        f.write_str("Areion512-256-Sponge")
     }
 }
 
