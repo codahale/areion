@@ -34,6 +34,11 @@ pub fn store(bytes: &mut [u8], block: AesBlock) {
 }
 
 #[inline]
+pub fn store_u32(bytes: &mut [u32], block: AesBlock) {
+    unsafe { vst1q_u32(bytes.as_mut_ptr(), vreinterpretq_u32_u8(block)) };
+}
+
+#[inline]
 pub fn xor(a: AesBlock, b: AesBlock) -> AesBlock {
     unsafe { veorq_u8(a, b) }
 }

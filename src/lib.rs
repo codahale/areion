@@ -214,32 +214,25 @@ pub fn areion256_dm(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
     (xor(x0_p, x0), xor(x1_p, x1))
 }
 
-#[cfg(target_arch = "aarch64")]
 pub fn areion512_dm(
     x0: AesBlock,
     x1: AesBlock,
     x2: AesBlock,
     x3: AesBlock,
 ) -> (AesBlock, AesBlock) {
-    use core::arch::aarch64::*;
-    unsafe {
-        let (x0_p, x1_p, x2_p, x3_p) = areion512(x0, x1, x2, x3);
-        let (x0_p, x1_p, x2_p, x3_p) = (xor(x0_p, x0), xor(x1_p, x1), xor(x2_p, x2), xor(x3_p, x3));
+    let (x0_p, x1_p, x2_p, x3_p) = areion512(x0, x1, x2, x3);
+    let (x0_p, x1_p, x2_p, x3_p) = (xor(x0_p, x0), xor(x1_p, x1), xor(x2_p, x2), xor(x3_p, x3));
 
-        let mut x = [0u32; 16];
-        vst1q_u32(x[..4].as_mut_ptr(), vreinterpretq_u32_u8(x0_p));
-        vst1q_u32(x[4..8].as_mut_ptr(), vreinterpretq_u32_u8(x1_p));
-        vst1q_u32(x[8..12].as_mut_ptr(), vreinterpretq_u32_u8(x2_p));
-        vst1q_u32(x[12..].as_mut_ptr(), vreinterpretq_u32_u8(x3_p));
+    let mut x = [0u32; 16];
+    store_u32(&mut x[..4], x0_p);
+    store_u32(&mut x[4..8], x1_p);
+    store_u32(&mut x[8..12], x2_p);
+    store_u32(&mut x[12..], x3_p);
 
-        let x0 = [x[2], x[3], x[6], x[7]];
-        let x1 = [x[8], x[9], x[12], x[13]];
-
-        (
-            vreinterpretq_u8_u32(vld1q_u32(x0.as_ptr())),
-            vreinterpretq_u8_u32(vld1q_u32(x1.as_ptr())),
-        )
-    }
+    (
+        load_32x4(x[2], x[3], x[6], x[7]),
+        load_32x4(x[8], x[9], x[12], x[13]),
+    )
 }
 
 #[cfg(test)]

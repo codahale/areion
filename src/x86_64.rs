@@ -28,6 +28,11 @@ pub fn store(bytes: &mut [u8], block: AesBlock) {
 }
 
 #[inline]
+pub fn store_u32(bytes: &mut [u32], block: AesBlock) {
+    unsafe { _mm_storeu_si128(bytes.as_mut_ptr() as *mut __m128i, block) };
+}
+
+#[inline]
 pub fn xor(a: AesBlock, b: AesBlock) -> AesBlock {
     unsafe { _mm_xor_si128(a, b) }
 }

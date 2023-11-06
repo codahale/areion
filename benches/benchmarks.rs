@@ -23,14 +23,12 @@ fn areion512(b: Bencher) {
     .bench_values(|(x0, x1, x2, x3)| areion::areion512(x0, x1, x2, x3))
 }
 
-#[cfg(target_arch = "aarch64")]
 #[divan::bench(counters = [BytesCount::new(32usize)])]
 fn areion256_dm(b: Bencher) {
     b.with_inputs(|| (areion::zero(), areion::zero()))
         .bench_values(|(x0, x1)| areion::areion256_dm(x0, x1))
 }
 
-#[cfg(target_arch = "aarch64")]
 #[divan::bench(counters = [BytesCount::new(64usize)])]
 fn areion512_dm(b: Bencher) {
     b.with_inputs(|| {
