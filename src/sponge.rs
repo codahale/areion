@@ -14,29 +14,29 @@ use digest::crypto_common::AlgorithmName;
 use digest::generic_array::GenericArray;
 use digest::typenum::{Unsigned, U32};
 use digest::{HashMarker, Output, OutputSizeUser, Reset};
-use hex_literal::hex;
 
 #[derive(Debug, Clone)]
-struct State(AesBlock, AesBlock);
+struct State(AesBlock, AesBlock, AesBlock, AesBlock);
 
 impl Default for State {
     fn default() -> Self {
         Self(
-            load(&hex!("6a09e667bb67ae853c6ef372a54ff53a")),
-            load(&hex!("510e527f9b05688c1f83d9ab5be0cd19")),
+            load_64x2(0x6a09e667f3bcc908u64, 0xbb67ae8584caa73bu64),
+            load_64x2(0x3c6ef372fe94f82bu64, 0xa54ff53a5f1d36f1u64),
+            load_64x2(0x510e527fade682d1u64, 0x9b05688c2b3e6c1fu64),
+            load_64x2(0x1f83d9abfb41bd6bu64, 0x5be0cd19137e2179u64),
         )
     }
 }
 
 impl State {
     fn compress(&mut self, blocks: &[GenericArray<u8, U32>]) {
-        let Self(mut h0, mut h1) = self;
+        let Self(mut h0, mut h1, mut h2, mut h3) = self;
         for block in blocks {
-            let (m0, m1) = (load(&block[..16]), load(&block[16..32]));
-            let (x0, x1) = crate::areion512_dm(m0, m1, h0, h1);
-            (h0, h1) = (xor(h0, x0), xor(h1, x1));
+            let (m0, m1) = (load(&block[..16]), load(&block[16..]));
+            (h0, h1, h2, h3) = crate::areion512(xor(h0, m0), xor(h1, m1), h2, h3);
         }
-        *self = Self(h0, h1);
+        *self = Self(h0, h1, h2, h3);
     }
 }
 
@@ -75,7 +75,7 @@ impl FixedOutputCore for Core {
         buffer.len128_padding_be(bit_len, |b| self.state.compress(slice::from_ref(b)));
 
         store(&mut out[..16], self.state.0);
-        store(&mut out[16..32], self.state.1);
+        store(&mut out[16..], self.state.1);
     }
 }
 
@@ -89,8 +89,8 @@ impl Reset for Core {
 impl AlgorithmName for Core {
     #[inline]
     fn write_alg_name(f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("Areion512-MD")
+        f.write_str("Areion-256-Sponge")
     }
 }
 
-pub type Areion512Md = CoreWrapper<Core>;
+pub type Areion256Sponge = CoreWrapper<Core>;

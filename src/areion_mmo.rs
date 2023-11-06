@@ -1,10 +1,10 @@
 use core::{fmt, slice};
 
 #[cfg(target_arch = "aarch64")]
-use crate::aarch64::{Block as AesBlock, *};
+use crate::aarch64::*;
 
 #[cfg(target_arch = "x86_64")]
-use crate::x86_64::{Block as AesBlock, *};
+use crate::x86_64::*;
 
 use digest::block_buffer::Eager;
 use digest::core_api::{

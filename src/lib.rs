@@ -18,19 +18,21 @@ pub use internal::zero;
 mod areion_md;
 
 mod areion_mmo;
+mod sponge;
 
 #[cfg(target_arch = "aarch64")]
 pub use crate::areion_md::Areion512Md;
 pub use crate::areion_mmo::Areion512Mmo;
+pub use crate::sponge::Areion256Sponge;
 
 #[inline]
 #[allow(clippy::identity_op)]
-unsafe fn simpira_f<const C: u32, const B: u32>(x: Block) -> Block {
+unsafe fn simpira_f<const C: u32, const B: u32>(x: AesBlock) -> AesBlock {
     let c = load_32x4(0x00 ^ C ^ B, 0x10 ^ C ^ B, 0x20 ^ C ^ B, 0x30 ^ C ^ B);
     enc(enc(x, c), zero())
 }
 
-pub fn simpira_v2_b2(mut x0: Block, mut x1: Block) -> (Block, Block) {
+pub fn simpira_v2_b2(mut x0: AesBlock, mut x1: AesBlock) -> (AesBlock, AesBlock) {
     unsafe {
         (x0, x1) = (xor(simpira_f::<1, 2>(x0), x1), x0);
         (x0, x1) = (xor(simpira_f::<2, 2>(x0), x1), x0);
@@ -81,14 +83,14 @@ static RC0: [[u8; 16]; 24] = [
 static RC1: [u8; 16] = hex!("00000000000000000000000000000000");
 
 #[inline]
-fn round_256<const R: usize>(x0: Block, x1: Block) -> (Block, Block) {
+fn round_256<const R: usize>(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
     let (x1, x0) = (enc(enc(x0, rc0), x1), enc_last(x0, rc1));
     (x0, x1)
 }
 
-pub fn areion256(x0: Block, x1: Block) -> (Block, Block) {
+pub fn areion256(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
     let (x0, x1) = round_256::<0>(x0, x1);
     let (x1, x0) = round_256::<1>(x1, x0);
     let (x0, x1) = round_256::<2>(x0, x1);
@@ -103,7 +105,7 @@ pub fn areion256(x0: Block, x1: Block) -> (Block, Block) {
 }
 
 #[inline]
-fn inv_round_256<const R: usize>(x0: Block, x1: Block) -> (Block, Block) {
+fn inv_round_256<const R: usize>(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
     let x0 = dec_last(x0, rc1);
@@ -111,7 +113,7 @@ fn inv_round_256<const R: usize>(x0: Block, x1: Block) -> (Block, Block) {
     (x0, x1)
 }
 
-pub fn inv_areion256(x0: Block, x1: Block) -> (Block, Block) {
+pub fn inv_areion256(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
     let (x1, x0) = inv_round_256::<9>(x1, x0);
     let (x0, x1) = inv_round_256::<8>(x0, x1);
     let (x1, x0) = inv_round_256::<7>(x1, x0);
@@ -127,11 +129,11 @@ pub fn inv_areion256(x0: Block, x1: Block) -> (Block, Block) {
 
 #[inline]
 fn round_512<const R: usize>(
-    x0: Block,
-    x1: Block,
-    x2: Block,
-    x3: Block,
-) -> (Block, Block, Block, Block) {
+    x0: AesBlock,
+    x1: AesBlock,
+    x2: AesBlock,
+    x3: AesBlock,
+) -> (AesBlock, AesBlock, AesBlock, AesBlock) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
     let x1 = enc(x0, x1);
@@ -141,7 +143,12 @@ fn round_512<const R: usize>(
     (x0, x1, x2, x3)
 }
 
-pub fn areion512(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block, Block, Block) {
+pub fn areion512(
+    x0: AesBlock,
+    x1: AesBlock,
+    x2: AesBlock,
+    x3: AesBlock,
+) -> (AesBlock, AesBlock, AesBlock, AesBlock) {
     let (x0, x1, x2, x3) = round_512::<0>(x0, x1, x2, x3);
     let (x1, x2, x3, x0) = round_512::<1>(x1, x2, x3, x0);
     let (x2, x3, x0, x1) = round_512::<2>(x2, x3, x0, x1);
@@ -162,11 +169,11 @@ pub fn areion512(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block, B
 
 #[inline]
 fn inv_round_512<const R: usize>(
-    x0: Block,
-    x1: Block,
-    x2: Block,
-    x3: Block,
-) -> (Block, Block, Block, Block) {
+    x0: AesBlock,
+    x1: AesBlock,
+    x2: AesBlock,
+    x3: AesBlock,
+) -> (AesBlock, AesBlock, AesBlock, AesBlock) {
     let rc0 = load(&RC0[R]);
     let rc1 = load(&RC1);
     let x0 = dec_last(x0, rc1);
@@ -176,7 +183,12 @@ fn inv_round_512<const R: usize>(
     (x0, x1, x2, x3)
 }
 
-pub fn inv_areion512(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block, Block, Block) {
+pub fn inv_areion512(
+    x0: AesBlock,
+    x1: AesBlock,
+    x2: AesBlock,
+    x3: AesBlock,
+) -> (AesBlock, AesBlock, AesBlock, AesBlock) {
     let (x2, x3, x0, x1) = inv_round_512::<14>(x2, x3, x0, x1);
     let (x1, x2, x3, x0) = inv_round_512::<13>(x1, x2, x3, x0);
     let (x0, x1, x2, x3) = inv_round_512::<12>(x0, x1, x2, x3);
@@ -195,13 +207,18 @@ pub fn inv_areion512(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Bloc
     (x0, x1, x2, x3)
 }
 
-pub fn areion256_dm(x0: Block, x1: Block) -> (Block, Block) {
+pub fn areion256_dm(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
     let (x0_p, x1_p) = areion256(x0, x1);
     (xor(x0_p, x0), xor(x1_p, x1))
 }
 
 #[cfg(target_arch = "aarch64")]
-pub fn areion512_dm(x0: Block, x1: Block, x2: Block, x3: Block) -> (Block, Block) {
+pub fn areion512_dm(
+    x0: AesBlock,
+    x1: AesBlock,
+    x2: AesBlock,
+    x3: AesBlock,
+) -> (AesBlock, AesBlock) {
     use core::arch::aarch64::*;
     unsafe {
         let (x0_p, x1_p, x2_p, x3_p) = areion512(x0, x1, x2, x3);
