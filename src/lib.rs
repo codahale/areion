@@ -142,6 +142,7 @@ fn round_512<const R: usize>(
     (x0, x1, x2, x3)
 }
 
+#[inline]
 pub fn areion512(
     x0: AesBlock,
     x1: AesBlock,
