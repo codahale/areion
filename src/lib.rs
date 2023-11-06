@@ -15,14 +15,13 @@ use crate::x86_64::{self as internal, *};
 pub use internal::zero;
 
 #[cfg(target_arch = "aarch64")]
-mod areion_md;
-
-mod areion_mmo;
+mod md;
+mod mmo;
 mod sponge;
 
 #[cfg(target_arch = "aarch64")]
-pub use crate::areion_md::Areion512Md;
-pub use crate::areion_mmo::Areion512Mmo;
+pub use crate::md::Areion512Md;
+pub use crate::mmo::Areion512Mmo;
 pub use crate::sponge::Areion256Sponge;
 
 #[inline]
