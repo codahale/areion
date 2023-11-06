@@ -64,16 +64,15 @@ impl State {
             );
 
             // C(H, M, #bits) = P(H ^ M ^ #bits) ^ H ^ M
-            let (x0, x1, x2, x3) = crate::areion512(
-                xor(h0, m0),
-                xor(h1, m1),
-                xor(h2, m2),
-                xor3(h3, m3, load(&ctr.to_le_bytes())),
-            );
-            h0 = xor3(h0, x0, m0);
-            h1 = xor3(h1, x1, m1);
-            h2 = xor3(h2, x2, m2);
-            h3 = xor3(h3, x3, m3);
+            let a = xor(h0, m0);
+            let b = xor(h1, m1);
+            let c = xor(h2, m2);
+            let d = xor(h3, m3);
+            let (x0, x1, x2, x3) = crate::areion512(a, b, c, xor(d, load(&ctr.to_le_bytes())));
+            h0 = xor(a, x0);
+            h1 = xor(b, x1);
+            h2 = xor(c, x2);
+            h3 = xor(d, x3);
         }
 
         // Update the hash state and counter.
