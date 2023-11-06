@@ -14,11 +14,13 @@ use crate::x86_64::{self as internal, *};
 
 pub use internal::zero;
 
+mod haifa;
 #[cfg(target_arch = "aarch64")]
 mod md;
 mod mmo;
 mod sponge;
 
+pub use crate::haifa::{AreionHaifa512, AreionHaifaVar};
 #[cfg(target_arch = "aarch64")]
 pub use crate::md::Areion512Md;
 pub use crate::mmo::Areion512Mmo;

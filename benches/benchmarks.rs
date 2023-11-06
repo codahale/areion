@@ -1,4 +1,4 @@
-use areion::Areion256Sponge;
+use areion::{Areion256Sponge, AreionHaifa512};
 use divan::counter::BytesCount;
 use divan::Bencher;
 use sha2::digest::Digest;
@@ -85,6 +85,14 @@ fn areion256sponge<const LEN: usize>(bencher: divan::Bencher) {
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))
         .bench_refs(|block| Areion256Sponge::new().chain_update(block).finalize());
+}
+
+#[divan::bench(consts = LENS)]
+fn areion512haifa<const LEN: usize>(bencher: divan::Bencher) {
+    bencher
+        .with_inputs(|| vec![0u8; LEN])
+        .counter(BytesCount::new(LEN))
+        .bench_refs(|block| AreionHaifa512::new().chain_update(block).finalize());
 }
 
 #[divan::bench(consts = LENS)]
