@@ -354,7 +354,6 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
-    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion256_dm_test_vector_1() {
         let x0 = load(&hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
@@ -370,7 +369,6 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
-    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion256_dm_test_vector_2() {
         let x0 = load(&hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
@@ -386,7 +384,6 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
-    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion512_dm_test_vector_1() {
         let x0 = load(&hex!("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
@@ -404,7 +401,6 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
-    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion512_dm_test_vector_2() {
         let x0 = load(&hex!("00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f"));
