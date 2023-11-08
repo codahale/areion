@@ -55,7 +55,9 @@ impl State {
         } = *self;
 
         for block in blocks {
-            // Increment the bit counter.
+            // Increment the bit counter *before* compressing the block. This eliminates the need
+            // for finalization-specific flags, as the output of compressing the final block of N
+            // bits will be dependent on the value of ctr+N.
             ctr += bit_len as u128;
 
             // Load the message block into four words.
@@ -66,17 +68,18 @@ impl State {
                 load(&block[48..]),
             );
 
-            // C(H, M, #bits) = P(H ^ M ^ T ^ #bits) ^ H ^ T
-            let (x0, x1, x2, x3) = crate::areion512(
-                xor3(h0, m0, t0),
-                xor3(h1, m1, t1),
-                xor3(h2, m2, t2),
-                xor3(h3, m3, xor(t3, load(&ctr.to_le_bytes()))),
+            // C(H, T, M, #bits) = P(H ^ T ^ M ^ #bits) ^ H ^ T
+            let (x0, x1, x2, x3) = (xor(h0, t0), xor(h1, t1), xor(h2, t2), xor(h3, t3));
+            let (y0, y1, y2, y3) = crate::areion512(
+                xor(x0, m0),
+                xor(x1, m1),
+                xor(x2, m2),
+                // Only include the counter as an input to the permutation. This avoids a
+                // Streebog-type situation in which attackers have control of some of the bits of
+                // the output of a block's compression.
+                xor3(x3, m3, load(&ctr.to_le_bytes())),
             );
-            h0 = xor3(h0, x0, t0);
-            h1 = xor3(h1, x1, t1);
-            h2 = xor3(h2, x2, t2);
-            h3 = xor3(h3, x3, t3);
+            (h0, h1, h2, h3) = (xor(x0, y0), xor(x1, y1), xor(x2, y2), xor(x3, y3));
         }
 
         // Update the hash state and counter.
