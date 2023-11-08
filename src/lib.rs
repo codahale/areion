@@ -1,23 +1,13 @@
-#[cfg(target_arch = "aarch64")]
-mod aarch64;
-
-#[cfg(target_arch = "aarch64")]
-use crate::aarch64::{self as internal, *};
-
-#[cfg(target_arch = "x86_64")]
-mod x86_64;
-
-#[cfg(target_arch = "x86_64")]
-use crate::x86_64::{self as internal, *};
-
-pub use internal::zero;
-
 mod haifa;
+mod intrinsics;
 mod md;
 mod mmo;
 mod sponge;
 
+use intrinsics::*;
+
 pub use crate::haifa::{AreionHaifa512, AreionHaifaVar};
+pub use crate::intrinsics::zero;
 pub use crate::md::Areion512Md;
 pub use crate::mmo::Areion512Mmo;
 pub use crate::sponge::Areion256Sponge;
