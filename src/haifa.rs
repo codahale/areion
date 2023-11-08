@@ -16,16 +16,15 @@ use digest::{HashMarker, Output, OutputSizeUser, Reset};
 struct State {
     /// The 512-bit hash state.
     h: (AesBlock, AesBlock, AesBlock, AesBlock),
-    /// The 512-bit tweak.
+    /// The 512-bit tweak, dependent on the output length.
     t: (AesBlock, AesBlock, AesBlock, AesBlock),
     /// The message length counter, in bits.
-    ctr: u128,
+    m_len: u128,
 }
 
 impl State {
     fn new(output_size: usize) -> State {
-        // The hash state is initialized with the SHA2-512 IV constants, with the fourth word XORed
-        // with the output size in bits.
+        let output_size = load_64x2(0, output_size as u64);
         State {
             h: (
                 // SHA2-512 IV constants
@@ -39,9 +38,12 @@ impl State {
                 load_64x2(0x22312194fc2bf72c, 0x9f555fa3c84c64c2),
                 load_64x2(0x2393b86b6f53b151, 0x963877195940eabd),
                 load_64x2(0x96283ee2a88effe3, 0xbe5e1e2553863992),
-                load_64x2(0x2b0199fc2c85b8aa, 0x0eb72ddc81c52ca2 ^ output_size as u64),
+                xor(
+                    load_64x2(0x2b0199fc2c85b8aa, 0x0eb72ddc81c52ca2),
+                    output_size,
+                ),
             ),
-            ctr: 0,
+            m_len: 0,
         }
     }
 }
@@ -51,14 +53,14 @@ impl State {
         let Self {
             h: (mut h0, mut h1, mut h2, mut h3),
             t: (t0, t1, t2, t3),
-            mut ctr,
+            mut m_len,
         } = *self;
 
         for block in blocks {
             // Increment the bit counter *before* compressing the block. This eliminates the need
             // for finalization-specific flags, as the output of compressing the final block of N
             // bits will be dependent on the value of ctr+N.
-            ctr += bit_len as u128;
+            m_len += bit_len as u128;
 
             // Load the message block into four words.
             let (m0, m1, m2, m3) = (
@@ -77,14 +79,14 @@ impl State {
                 // Only include the counter as an input to the permutation. This avoids a
                 // Streebog-type situation in which attackers have control of some of the bits of
                 // the output of a block's compression.
-                xor3(x3, m3, load(&ctr.to_le_bytes())),
+                xor3(x3, m3, load(&m_len.to_le_bytes())),
             );
             (h0, h1, h2, h3) = (xor(x0, y0), xor(x1, y1), xor(x2, y2), xor(x3, y3));
         }
 
         // Update the hash state and counter.
         self.h = (h0, h1, h2, h3);
-        self.ctr = ctr;
+        self.m_len = m_len;
     }
 }
 
@@ -134,8 +136,7 @@ impl VariableOutputCore for Core {
         // Update the state with the compression function, using the length of the remaining data
         // in bits to update the counter.
         let bit_len = buffer.get_pos() as u64 * 8;
-        let padded = [*buffer.pad_with_zeros()];
-        self.state.compress(padded.as_slice(), bit_len);
+        self.state.compress(&[*buffer.pad_with_zeros()], bit_len);
 
         // Use the hash state as the digest, truncating as needed.
         let mut tmp = [0u8; 64];
