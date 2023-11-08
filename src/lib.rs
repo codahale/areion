@@ -1,5 +1,3 @@
-use hex_literal::hex;
-
 #[cfg(target_arch = "aarch64")]
 mod aarch64;
 
@@ -25,6 +23,9 @@ pub use crate::haifa::{AreionHaifa512, AreionHaifaVar};
 pub use crate::md::Areion512Md;
 pub use crate::mmo::Areion512Mmo;
 pub use crate::sponge::Areion256Sponge;
+
+pub use digest;
+use hex_literal::hex;
 
 #[inline]
 #[allow(clippy::identity_op)]

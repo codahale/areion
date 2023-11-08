@@ -1,7 +1,7 @@
+use areion::digest::Digest;
 use areion::{Areion256Sponge, AreionHaifa512};
 use divan::counter::BytesCount;
 use divan::Bencher;
-use sha2::digest::Digest;
 use sha2::{Sha256, Sha512};
 
 #[divan::bench(counters = [BytesCount::new(32usize)])]
@@ -53,7 +53,6 @@ const LENS: &[usize] = &[16, 256, 1024, 16 * 1024, 1024 * 1024];
 #[cfg(target_arch = "aarch64")]
 #[divan::bench(consts = LENS)]
 fn areion512_md<const LEN: usize>(bencher: divan::Bencher) {
-    use digest::Digest;
     bencher
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))
@@ -66,7 +65,6 @@ fn areion512_md<const LEN: usize>(bencher: divan::Bencher) {
 
 #[divan::bench(consts = LENS)]
 fn areion512_mmo<const LEN: usize>(bencher: divan::Bencher) {
-    use digest::Digest;
     bencher
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))

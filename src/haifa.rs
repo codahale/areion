@@ -20,6 +20,8 @@ use digest::{HashMarker, Output, OutputSizeUser, Reset};
 struct State {
     /// The 512-bit hash state.
     h: (AesBlock, AesBlock, AesBlock, AesBlock),
+    /// The 512-bit tweak.
+    t: (AesBlock, AesBlock, AesBlock, AesBlock),
     /// The message length counter, in bits.
     ctr: u128,
 }
@@ -31,13 +33,17 @@ impl State {
         State {
             h: (
                 // SHA2-512 IV constants
-                load_64x2(0x6a09e667f3bcc908u64, 0xbb67ae8584caa73bu64),
-                load_64x2(0x3c6ef372fe94f82bu64, 0xa54ff53a5f1d36f1u64),
-                load_64x2(0x510e527fade682d1u64, 0x9b05688c2b3e6c1fu64),
-                load_64x2(
-                    0x1f83d9abfb41bd6bu64,
-                    0x5be0cd19137e2179u64 ^ output_size as u64,
-                ),
+                load_64x2(0x6a09e667f3bcc908, 0xbb67ae8584caa73b),
+                load_64x2(0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1),
+                load_64x2(0x510e527fade682d1, 0x9b05688c2b3e6c1f),
+                load_64x2(0x1f83d9abfb41bd6b, 0x5be0cd19137e2179),
+            ),
+            t: (
+                // SHA2-512-256 IV constants
+                load_64x2(0x22312194fc2bf72c, 0x9f555fa3c84c64c2),
+                load_64x2(0x2393b86b6f53b151, 0x963877195940eabd),
+                load_64x2(0x96283ee2a88effe3, 0xbe5e1e2553863992),
+                load_64x2(0x2b0199fc2c85b8aa, 0x0eb72ddc81c52ca2 ^ output_size as u64),
             ),
             ctr: 0,
         }
@@ -48,6 +54,7 @@ impl State {
     fn compress(&mut self, blocks: &[GenericArray<u8, U64>], bit_len: u64) {
         let Self {
             h: (mut h0, mut h1, mut h2, mut h3),
+            t: (t0, t1, t2, t3),
             mut ctr,
         } = *self;
 
@@ -63,16 +70,17 @@ impl State {
                 load(&block[48..]),
             );
 
-            // C(H, M, #bits) = P(H ^ M ^ #bits) ^ H ^ M
-            let a = xor(h0, m0);
-            let b = xor(h1, m1);
-            let c = xor(h2, m2);
-            let d = xor(h3, m3);
-            let (x0, x1, x2, x3) = crate::areion512(a, b, c, xor(d, load(&ctr.to_le_bytes())));
-            h0 = xor(a, x0);
-            h1 = xor(b, x1);
-            h2 = xor(c, x2);
-            h3 = xor(d, x3);
+            // C(H, M, #bits) = P(H ^ M ^ T ^ #bits) ^ H ^ T
+            let (x0, x1, x2, x3) = crate::areion512(
+                xor3(h0, m0, t0),
+                xor3(h1, m1, t1),
+                xor3(h2, m2, t2),
+                xor3(h3, m3, xor(t3, load(&ctr.to_le_bytes()))),
+            );
+            h0 = xor3(h0, x0, t0);
+            h1 = xor3(h1, x1, t1);
+            h2 = xor3(h2, x2, t2);
+            h3 = xor3(h3, x3, t3);
         }
 
         // Update the hash state and counter.

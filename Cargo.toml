@@ -8,12 +8,9 @@ digest = { version = "0.10.7", default-features = false, features = ["block-buff
 hex-literal = "0.4.1"
 
 [dev-dependencies]
-blake3 = "1.5.0"
 divan = "0.1.2"
 expect-test = "1.4.1"
 hex = "0.4.3"
-sha2 = { version = "0.10.6", default-features = false, features = ["asm"] }
 
-[[bench]]
-name = "benchmarks"
-harness = false
+[workspace]
+members = ["benchmarks"]
