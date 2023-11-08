@@ -72,23 +72,30 @@ Silicon processors.
 Areion-512-HAIFA is a HAIFA-style hash function based on the Areion512 permutation, allowing for
 variable digest lengths (0..64 bytes), and immune to length extension attacks.
 
-Areion-512-MMO uses four 128-bit words, initialized with the same constants as SHA-512, with the
+Areion-512-MMO uses four 128-bit words, initialized with the same constants as SHA-512, plus a
+constant tweak, consisting of the SHA-512-256 constants, XORed with the output size.
+
+, with the
 final word XORed with the output size in bits:
 
 ```text
 H_0 = (0x6a09e667f3bcc908bb67ae8584caa73b, 0x3c6ef372fe94f82ba54ff53a5f1d36f1,
-       0x510e527fade682d19b05688c2b3e6c1f, 0x1f83d9abfb41bd6b5be0cd19137e2179 ^ output_size)
+       0x510e527fade682d19b05688c2b3e6c1f, 0x1f83d9abfb41bd6b5be0cd19137e2179)
+T = (0x22312194fc2bf72c9f555fa3c84c64c2, 0x2393b86b6f53b151963877195940eabd,
+     0x96283ee2a88effe3be5e1e2553863992, 0x2b0199fc2c85b8aa0eb72ddc81c52ca2 ^ output_size)
 ```
+
+The tweak can also be used to incorporate a salt, domain separation string, and other metadata.
 
 Its compression function uses a 128-bit counter of the number of bits which have been processed,
 including the current block:
 
 ```text
-C(H, M, #bits) = P(H ^ M ^ #bits) ^ H ^ M
+C(H, T, M, #bits) = P(H ^ T ^ M ^ #bits) ^ H ^ T
 ```
 
 The resulting hash function offers 256 bits of collision resistance if the permutation `P` (i.e.
-Areion-512) is indistinguishable from a random permutation. Untruncated digests are vulnerable to
+Areion-512) is indistinguishable from a random permutation. This construction is not vulnerable to
 length-extension attacks. With dedicated AES and 128-bit vector instructions, performance is ~1.7x
 that of vectorized SHA-256 on x86_64 processors and ~1.2x that of fully-accelerated SHA-256 on Apple
 Silicon processors.
