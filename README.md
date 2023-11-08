@@ -10,9 +10,8 @@ cryptanalysis to date.
 
 ## Correctness
 
-The Areion512-MD tests don't pass because the actual algorithm is super underspecified in the paper
-and no permutation I tried of "just swap SHA256's compression function" actually passed the test
-vectors.
+This implementation is compliant with the test vectors in the updated version of the paper
+(2023-09-21).
 
 ## Other Fun Stuff
 

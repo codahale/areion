@@ -32,9 +32,8 @@ impl State {
     fn compress(&mut self, blocks: &[GenericArray<u8, U32>]) {
         let Self(mut h0, mut h1) = self;
         for block in blocks {
-            let (m0, m1) = (load(&block[..16]), load(&block[16..32]));
-            let (x0, x1) = crate::areion512_dm(m0, m1, h0, h1);
-            (h0, h1) = (xor(h0, x0), xor(h1, x1));
+            let (m0, m1) = (load(&block[..16]), load(&block[16..]));
+            (h0, h1) = crate::areion512_dm(m0, m1, h0, h1);
         }
         *self = Self(h0, h1);
     }
@@ -43,7 +42,7 @@ impl State {
 #[derive(Debug, Default, Clone)]
 pub struct Core {
     state: State,
-    block_len: u128,
+    block_len: u64,
 }
 
 impl HashMarker for Core {}
@@ -63,19 +62,19 @@ impl OutputSizeUser for Core {
 impl UpdateCore for Core {
     #[inline]
     fn update_blocks(&mut self, blocks: &[Block<Self>]) {
-        self.block_len += blocks.len() as u128;
+        self.block_len += blocks.len() as u64;
         self.state.compress(blocks);
     }
 }
 
 impl FixedOutputCore for Core {
     fn finalize_fixed_core(&mut self, buffer: &mut Buffer<Self>, out: &mut Output<Self>) {
-        let bs = Self::BlockSize::U64 as u128;
-        let bit_len = 8 * (buffer.get_pos() as u128 + bs * self.block_len);
-        buffer.len128_padding_be(bit_len, |b| self.state.compress(slice::from_ref(b)));
+        let bs = Self::BlockSize::U64;
+        let bit_len = 8 * (buffer.get_pos() as u64 + bs * self.block_len);
+        buffer.len64_padding_be(bit_len, |b| self.state.compress(slice::from_ref(b)));
 
         store(&mut out[..16], self.state.0);
-        store(&mut out[16..32], self.state.1);
+        store(&mut out[16..], self.state.1);
     }
 }
 

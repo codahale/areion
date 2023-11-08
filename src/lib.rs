@@ -55,38 +55,36 @@ pub fn simpira_v2_b2(mut x0: AesBlock, mut x1: AesBlock) -> (AesBlock, AesBlock)
 }
 
 static RC0: [[u8; 16]; 24] = [
-    hex!("886a3f24d308a3852e8a191344737003"),
-    hex!("223809a4d0319f2998fa2e08896c4eec"),
-    hex!("e62128457713d038cf6654be6c0ce934"),
-    hex!("b729acc0dd507cc9b5d5843f170947b5"),
-    hex!("d9d516921bfb7989a60b31d1acb5df98"),
-    hex!("db72fd2fb7df1ad0edafe1b8967e266a"),
-    hex!("45907cba997f2cf14799a124f76c91b3"),
-    hex!("282e1f8066c1ef58870d923690e67415"),
-    hex!("a3fe58a47e3d93f48f74950d58b68e72"),
-    hex!("58cd8b71ee4a15821da4547bb5595ac2"),
-    hex!("39d5309c1360f22a23b0d1c5f0856028"),
-    hex!("187941caef38dbb8b0dc798e0e183a60"),
-    hex!("8b0e9e6c3e8a1eb0c17715d7274b31bd"),
-    hex!("da2faf78605c6055f32555e694ab55aa"),
-    hex!("629848574014e8636a39ca55b610ab2a"),
-    hex!("345cccb4cee84111af8654a193e9727c"),
-    hex!("1114eeb32abc6f635dc5a92bf6311874"),
-    hex!("163e5cce1e93879b33bad6af5ccf246c"),
-    hex!("8153327a7786952898488f3bafb94b6b"),
-    hex!("1be8bfc493212866cc09d86191a921fb"),
-    hex!("60ac7c483280ec5d5d5d84efb17585e9"),
-    hex!("022326dc881b65eb813e8923c5ac96d3"),
-    hex!("38ffd6f69223443f2a48b4e040004248"),
-    hex!("4af0c8695e9b1f9e4268c6219a6ce9f6"),
+    hex!("447370032e8a1913d308a385886a3f24"),
+    hex!("896c4eec98fa2e08d0319f29223809a4"),
+    hex!("6c0ce934cf6654be7713d038e6212845"),
+    hex!("170947b5b5d5843fdd507cc9b729acc0"),
+    hex!("acb5df98a60b31d11bfb7989d9d51692"),
+    hex!("967e266aedafe1b8b7df1ad0db72fd2f"),
+    hex!("f76c91b34799a124997f2cf145907cba"),
+    hex!("90e67415870d923666c1ef58282e1f80"),
+    hex!("58b68e728f74950d7e3d93f4a3fe58a4"),
+    hex!("b5595ac21da4547bee4a158258cd8b71"),
+    hex!("f085602823b0d1c51360f22a39d5309c"),
+    hex!("0e183a60b0dc798eef38dbb8187941ca"),
+    hex!("274b31bdc17715d73e8a1eb08b0e9e6c"),
+    hex!("94ab55aaf32555e6605c6055da2faf78"),
+    hex!("b610ab2a6a39ca554014e86362984857"),
+    hex!("93e9727caf8654a1cee84111345cccb4"),
+    hex!("f63118745dc5a92b2abc6f631114eeb3"),
+    hex!("5ccf246c33bad6af1e93879b163e5cce"),
+    hex!("afb94b6b98488f3b778695288153327a"),
+    hex!("91a921fbcc09d861932128661be8bfc4"),
+    hex!("b17585e95d5d84ef3280ec5d60ac7c48"),
+    hex!("c5ac96d3813e8923881b65eb022326dc"),
+    hex!("400042482a48b4e09223443f38ffd6f6"),
+    hex!("9a6ce9f64268c6215e9b1f9e4af0c869"),
 ];
-
-static RC1: [u8; 16] = hex!("00000000000000000000000000000000");
 
 #[inline]
 fn round_256<const R: usize>(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
     let rc0 = load(&RC0[R]);
-    let rc1 = load(&RC1);
+    let rc1 = zero();
     let (x1, x0) = (enc(enc(x0, rc0), x1), enc_last(x0, rc1));
     (x0, x1)
 }
@@ -108,7 +106,7 @@ pub fn areion256(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
 #[inline]
 fn inv_round_256<const R: usize>(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
     let rc0 = load(&RC0[R]);
-    let rc1 = load(&RC1);
+    let rc1 = zero();
     let x0 = dec_last(x0, rc1);
     let x1 = enc(enc(x0, rc0), x1);
     (x0, x1)
@@ -136,7 +134,7 @@ fn round_512<const R: usize>(
     x3: AesBlock,
 ) -> (AesBlock, AesBlock, AesBlock, AesBlock) {
     let rc0 = load(&RC0[R]);
-    let rc1 = load(&RC1);
+    let rc1 = zero();
     let x1 = enc(x0, x1);
     let x3 = enc(x2, x3);
     let x0 = enc_last(x0, rc1);
@@ -166,7 +164,7 @@ pub fn areion512(
     let (x0, x1, x2, x3) = round_512::<12>(x0, x1, x2, x3);
     let (x1, x2, x3, x0) = round_512::<13>(x1, x2, x3, x0);
     let (x2, x3, x0, x1) = round_512::<14>(x2, x3, x0, x1);
-    (x0, x1, x2, x3)
+    (x3, x0, x1, x2)
 }
 
 #[inline]
@@ -177,7 +175,7 @@ fn inv_round_512<const R: usize>(
     x3: AesBlock,
 ) -> (AesBlock, AesBlock, AesBlock, AesBlock) {
     let rc0 = load(&RC0[R]);
-    let rc1 = load(&RC1);
+    let rc1 = zero();
     let x0 = dec_last(x0, rc1);
     let x2 = dec_last(dec_last(inv_mix(x2), rc0), rc1);
     let x1 = enc(x0, x1);
@@ -191,6 +189,7 @@ pub fn inv_areion512(
     x2: AesBlock,
     x3: AesBlock,
 ) -> (AesBlock, AesBlock, AesBlock, AesBlock) {
+    let (x2, x3, x0, x1) = (x3, x0, x1, x2);
     let (x2, x3, x0, x1) = inv_round_512::<14>(x2, x3, x0, x1);
     let (x1, x2, x3, x0) = inv_round_512::<13>(x1, x2, x3, x0);
     let (x0, x1, x2, x3) = inv_round_512::<12>(x0, x1, x2, x3);
@@ -292,8 +291,8 @@ mod tests {
         store(&mut x_p[..16], x0);
         store(&mut x_p[16..], x1);
         expect![[r#"
-                e5 a7 66 63 82 50 14 24 68 dc 9d 76 65 dd 36 9f
-                8f 79 99 8b 7a a0 92 90 6f e5 1b fd eb fa c9 c1"#]]
+                28 12 a7 24 65 b2 6e 9f ca 75 83 f6 e4 12 3a a1
+                49 0e 35 e7 d5 20 3e 4b a2 e9 27 b0 48 2f 4d b8"#]]
         .assert_eq(&hex_fmt(&x_p));
     }
 
@@ -307,8 +306,8 @@ mod tests {
         store(&mut x_p[..16], x0);
         store(&mut x_p[16..], x1);
         expect![[r#"
-                73 53 ec 51 d4 9f ad 89 ee cb 5b ef 1e a0 e4 76
-                ed 6c dc dd af 34 62 0d 01 3d cc f2 a2 26 f4 57"#]]
+                68 84 5f 13 2e e4 61 60 66 c7 02 d9 42 a3 b2 c3
+                a3 77 f6 5b 13 bb 05 c7 cd 1f b2 9c 89 af a1 85"#]]
         .assert_eq(&hex_fmt(&x_p));
     }
 
@@ -326,10 +325,10 @@ mod tests {
         store(&mut x_p[32..48], x2);
         store(&mut x_p[48..], x3);
         expect![[r#"
-                5f ee f7 7c bb e8 4c 79 58 08 94 59 f4 54 e9 6f
-                bf 21 fa b8 35 65 cc af 91 6b cf 9c fb 63 d2 5b
-                a0 26 42 fc c1 75 12 36 40 d6 a2 18 3b a6 82 b2
-                0b 72 3a fc 66 68 ff f3 de c4 7c 17 61 27 b9 84"#]]
+                b2 ad b0 4f a9 1f 90 15 59 36 71 22 cb 3c 96 a9
+                78 cf 3e e4 b7 3c 6a 54 3f e6 dc 85 77 91 02 e7
+                e3 f5 50 10 16 ce ed 1d d2 c4 8d 0b c2 12 fb 07
+                ad 16 87 94 bd 96 cf f3 59 09 cd d8 e2 27 49 28"#]]
         .assert_eq(&hex_fmt(&x_p));
     }
 
@@ -347,10 +346,10 @@ mod tests {
         store(&mut x_p[32..48], x2);
         store(&mut x_p[48..], x3);
         expect![[r#"
-                a6 09 5f e0 57 d2 83 80 ba d2 5c 28 12 b2 30 f6
-                6f 07 b0 09 a3 04 98 5a f4 37 bb 60 8a 4c b8 31
-                39 2a 6f 2f 48 e4 25 ef 24 11 96 21 67 2e 37 c4
-                f1 9b 94 e0 e4 ea ed af b9 f4 eb 12 6a 6d 8a bb"#]]
+                b6 90 b8 82 97 ec 47 0b 07 dd a9 2b 91 95 9c ff
+                13 5e 9a c5 fc 3d c9 b6 47 a4 3f 4d aa 8d a7 a4
+                e0 af bd d8 e6 e2 55 c2 45 27 73 6b 29 8b d6 1d
+                e4 60 ba b9 ea 79 15 c6 d6 dd be 05 fe 8d de 40"#]]
         .assert_eq(&hex_fmt(&x_p));
     }
 
@@ -364,8 +363,8 @@ mod tests {
         store(&mut x_p[..16], x0);
         store(&mut x_p[16..], x1);
         expect![[r#"
-                e5 a7 66 63 82 50 14 24 68 dc 9d 76 65 dd 36 9f
-                8f 79 99 8b 7a a0 92 90 6f e5 1b fd eb fa c9 c1"#]]
+                28 12 a7 24 65 b2 6e 9f ca 75 83 f6 e4 12 3a a1
+                49 0e 35 e7 d5 20 3e 4b a2 e9 27 b0 48 2f 4d b8"#]]
         .assert_eq(&hex_fmt(&x_p));
     }
 
@@ -379,8 +378,8 @@ mod tests {
         store(&mut x_p[..16], x0);
         store(&mut x_p[16..], x1);
         expect![[r#"
-                73 52 ee 52 d0 9a ab 8e e6 c2 51 e4 12 ad ea 79
-                fd 7d ce ce bb 21 74 1a 19 24 d6 e9 be 3b ea 48"#]]
+                68 85 5d 10 2a e1 67 67 6e ce 08 d2 4e ae bc cc
+                b3 66 e4 48 07 ae 13 d0 d5 06 a8 87 95 b2 bf 9a"#]]
         .assert_eq(&hex_fmt(&x_p));
     }
 
@@ -396,8 +395,8 @@ mod tests {
         store(&mut x_p[..16], x0);
         store(&mut x_p[16..32], x1);
         expect![[r#"
-                58 08 94 59 f4 54 e9 6f 91 6b cf 9c fb 63 d2 5b
-                a0 26 42 fc c1 75 12 36 0b 72 3a fc 66 68 ff f3"#]]
+                59 36 71 22 cb 3c 96 a9 3f e6 dc 85 77 91 02 e7
+                e3 f5 50 10 16 ce ed 1d ad 16 87 94 bd 96 cf f3"#]]
         .assert_eq(&hex_fmt(&x_p));
     }
 
@@ -413,14 +412,13 @@ mod tests {
         store(&mut x_p[..16], x0);
         store(&mut x_p[16..32], x1);
         expect![[r#"
-                b2 db 56 23 1e bf 3e f9 ec 2e a1 7b 96 51 a6 2e
-                19 0b 4d 0c 6c c1 03 c8 c1 aa a6 d3 d0 df db 98"#]]
+                0f d4 a3 20 9d 98 92 f0 5f bd 25 56 b6 90 b9 bb
+                c0 8e 9f fb c2 c7 73 e5 d4 51 88 8a de 4c 23 f1"#]]
         .assert_eq(&hex_fmt(&x_p));
     }
 
     #[cfg(target_arch = "aarch64")]
     #[test]
-    #[ignore = "underspecified algorithm"]
     fn areion512_md_test_vector_1() {
         let data = hex!(
             "
@@ -435,8 +433,8 @@ mod tests {
         );
 
         expect![[r#"
-                47 dd 7f 2c 11 f3 05 e6 97 40 95 e3 c8 61 2f 6e
-                8d 09 bb ea 63 ef be 8d 84 55 8f cb f5 28 81 37"#]]
+                7f 22 34 44 5f 3a 72 00 65 93 79 42 01 53 6c 94
+                09 5d ab d3 fd b5 84 67 48 d3 59 55 5c 52 e6 51"#]]
         .assert_eq(&hex_fmt(
             &Areion512Md::default().chain_update(data).finalize(),
         ));
@@ -444,7 +442,6 @@ mod tests {
 
     #[cfg(target_arch = "aarch64")]
     #[test]
-    #[ignore = "underspecified algorithm"]
     fn areion512_md_test_vector_2() {
         let data = hex!(
             "
@@ -459,8 +456,8 @@ mod tests {
         );
 
         expect![[r#"
-                61 17 b5 9f 30 25 cd 4e 66 8b dc b3 66 bd 89 b9
-                06 0e 8d cf 67 0c bf 43 08 a8 96 86 8e bc c6 fc7"#]]
+                3e 4d 31 0f be 21 d0 7b b9 00 46 88 a1 50 36 b7
+                ab d9 ae 2f e9 e6 0c 9a ca 2a cc 36 98 5e 60 0b"#]]
         .assert_eq(&hex_fmt(
             &Areion512Md::default().chain_update(data).finalize(),
         ));
