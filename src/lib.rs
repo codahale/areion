@@ -13,13 +13,11 @@ use crate::x86_64::{self as internal, *};
 pub use internal::zero;
 
 mod haifa;
-#[cfg(target_arch = "aarch64")]
 mod md;
 mod mmo;
 mod sponge;
 
 pub use crate::haifa::{AreionHaifa512, AreionHaifaVar};
-#[cfg(target_arch = "aarch64")]
 pub use crate::md::Areion512Md;
 pub use crate::mmo::Areion512Mmo;
 pub use crate::sponge::Areion256Sponge;
@@ -239,7 +237,6 @@ pub fn areion512_dm(
 mod tests {
     use super::*;
 
-    #[cfg(target_arch = "aarch64")]
     use digest::Digest;
     use expect_test::expect;
     use hex_literal::hex;
@@ -418,7 +415,6 @@ mod tests {
         .assert_eq(&hex_fmt(&x_p));
     }
 
-    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion512_md_test_vector_1() {
         let data = hex!(
@@ -441,7 +437,6 @@ mod tests {
         ));
     }
 
-    #[cfg(target_arch = "aarch64")]
     #[test]
     fn areion512_md_test_vector_2() {
         let data = hex!(
