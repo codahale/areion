@@ -1,0 +1,45 @@
+[package]
+name = "areion-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.areion]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "haifa"
+path = "fuzz_targets/haifa.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "md"
+path = "fuzz_targets/md.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "mmo"
+path = "fuzz_targets/mmo.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "sponge"
+path = "fuzz_targets/sponge.rs"
+test = false
+doc = false
