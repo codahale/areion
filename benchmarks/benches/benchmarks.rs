@@ -50,7 +50,6 @@ fn simpira_v2_b2(b: Bencher) {
 
 const LENS: &[usize] = &[16, 256, 1024, 16 * 1024, 1024 * 1024];
 
-#[cfg(target_arch = "aarch64")]
 #[divan::bench(consts = LENS)]
 fn areion512_md<const LEN: usize>(bencher: divan::Bencher) {
     bencher
