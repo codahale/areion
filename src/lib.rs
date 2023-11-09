@@ -190,8 +190,8 @@ pub fn areion512_dm(
     store_u32(&mut x[12..], x3_p);
 
     (
-        load_32x4(x[2], x[3], x[6], x[7]),
-        load_32x4(x[8], x[9], x[12], x[13]),
+        load_u32(&[x[2], x[3], x[6], x[7]]),
+        load_u32(&[x[8], x[9], x[12], x[13]]),
     )
 }
 

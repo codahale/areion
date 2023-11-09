@@ -4,16 +4,6 @@ use core::arch::asm;
 pub use core::arch::aarch64::uint8x16_t as AesBlock;
 
 #[inline]
-pub fn load_32x4(a: u32, b: u32, c: u32, d: u32) -> AesBlock {
-    unsafe {
-        vreinterpretq_u8_u32(vsetq_lane_u32::<3>(
-            d,
-            vsetq_lane_u32::<2>(c, vsetq_lane_u32::<1>(b, vmovq_n_u32(a))),
-        ))
-    }
-}
-
-#[inline]
 pub fn zero() -> AesBlock {
     unsafe { vmovq_n_u8(0) }
 }
@@ -26,6 +16,11 @@ pub fn load(bytes: &[u8]) -> AesBlock {
 #[inline]
 pub fn store(bytes: &mut [u8], block: AesBlock) {
     unsafe { vst1q_u8(bytes.as_mut_ptr(), block) };
+}
+
+#[inline]
+pub fn load_u32(words: &[u32]) -> AesBlock {
+    unsafe { vreinterpretq_u8_u32(vld1q_u32(words.as_ptr())) }
 }
 
 #[inline]

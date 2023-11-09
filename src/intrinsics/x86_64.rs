@@ -8,11 +8,6 @@ pub fn zero() -> AesBlock {
 }
 
 #[inline]
-pub fn load_32x4(a: u32, b: u32, c: u32, d: u32) -> AesBlock {
-    unsafe { _mm_set_epi32(d as i32, c as i32, b as i32, a as i32) }
-}
-
-#[inline]
 pub fn load(bytes: &[u8]) -> AesBlock {
     unsafe { _mm_loadu_si128(bytes.as_ptr() as *const __m128i) }
 }
@@ -20,6 +15,11 @@ pub fn load(bytes: &[u8]) -> AesBlock {
 #[inline]
 pub fn store(bytes: &mut [u8], block: AesBlock) {
     unsafe { _mm_storeu_si128(bytes.as_mut_ptr() as *mut __m128i, block) };
+}
+
+#[inline]
+pub fn load_u32(words: &[u32]) -> AesBlock {
+    unsafe { _mm_loadu_si128(words.as_ptr() as *const __m128i) }
 }
 
 #[inline]
