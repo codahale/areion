@@ -201,7 +201,6 @@ mod tests {
 
     use digest::Digest;
     use expect_test::expect;
-    use hex_literal::hex;
 
     #[test]
     fn perm256_inversion() {
