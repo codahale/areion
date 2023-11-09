@@ -6,7 +6,7 @@ use sha2::{Sha256, Sha512};
 
 #[divan::bench(counters = [BytesCount::new(32usize)])]
 fn areion256(b: Bencher) {
-    b.with_inputs(|| (areion::zero(), areion::zero()))
+    b.with_inputs(|| (areion::load(&[0u8; 16]), areion::load(&[0u8; 16])))
         .bench_values(|(x0, x1)| areion::areion256(x0, x1))
 }
 
@@ -14,10 +14,10 @@ fn areion256(b: Bencher) {
 fn areion512(b: Bencher) {
     b.with_inputs(|| {
         (
-            areion::zero(),
-            areion::zero(),
-            areion::zero(),
-            areion::zero(),
+            areion::load(&[0u8; 16]),
+            areion::load(&[0u8; 16]),
+            areion::load(&[0u8; 16]),
+            areion::load(&[0u8; 16]),
         )
     })
     .bench_values(|(x0, x1, x2, x3)| areion::areion512(x0, x1, x2, x3))
@@ -25,7 +25,7 @@ fn areion512(b: Bencher) {
 
 #[divan::bench(counters = [BytesCount::new(32usize)])]
 fn areion256_dm(b: Bencher) {
-    b.with_inputs(|| (areion::zero(), areion::zero()))
+    b.with_inputs(|| (areion::load(&[0u8; 16]), areion::load(&[0u8; 16])))
         .bench_values(|(x0, x1)| areion::areion256_dm(x0, x1))
 }
 
@@ -33,10 +33,10 @@ fn areion256_dm(b: Bencher) {
 fn areion512_dm(b: Bencher) {
     b.with_inputs(|| {
         (
-            areion::zero(),
-            areion::zero(),
-            areion::zero(),
-            areion::zero(),
+            areion::load(&[0u8; 16]),
+            areion::load(&[0u8; 16]),
+            areion::load(&[0u8; 16]),
+            areion::load(&[0u8; 16]),
         )
     })
     .bench_values(|(x0, x1, x2, x3)| areion::areion512_dm(x0, x1, x2, x3))
@@ -44,7 +44,7 @@ fn areion512_dm(b: Bencher) {
 
 #[divan::bench(counters = [BytesCount::new(32usize)])]
 fn simpira_v2_b2(b: Bencher) {
-    b.with_inputs(|| (areion::zero(), areion::zero()))
+    b.with_inputs(|| (areion::load(&[0u8; 16]), areion::load(&[0u8; 16])))
         .bench_values(|(x0, x1)| areion::simpira_v2_b2(x0, x1))
 }
 

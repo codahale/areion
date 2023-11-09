@@ -7,7 +7,7 @@ mod sponge;
 use intrinsics::*;
 
 pub use crate::haifa::{AreionHaifa512, AreionHaifaVar};
-pub use crate::intrinsics::zero;
+pub use crate::intrinsics::{load, store};
 pub use crate::md::Areion512Md;
 pub use crate::mmo::Areion512Mmo;
 pub use crate::sponge::Areion256Sponge;
