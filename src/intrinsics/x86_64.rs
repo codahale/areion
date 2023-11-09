@@ -8,11 +8,6 @@ pub fn zero() -> AesBlock {
 }
 
 #[inline]
-pub fn load_64x2(a: u64, b: u64) -> AesBlock {
-    unsafe { _mm_set_epi64x(b as i64, a as i64) }
-}
-
-#[inline]
 pub fn load_32x4(a: u32, b: u32, c: u32, d: u32) -> AesBlock {
     unsafe { _mm_set_epi32(d as i32, c as i32, b as i32, a as i32) }
 }

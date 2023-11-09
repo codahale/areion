@@ -11,6 +11,7 @@ use digest::crypto_common::AlgorithmName;
 use digest::generic_array::GenericArray;
 use digest::typenum::{Unsigned, U64};
 use digest::{HashMarker, Output, OutputSizeUser, Reset};
+use hex_literal::hex;
 
 #[derive(Debug, Clone)]
 struct State {
@@ -24,24 +25,21 @@ struct State {
 
 impl State {
     fn new(output_size: usize) -> State {
-        let output_size = load_64x2(0, output_size as u64);
+        let output_size = load(&(output_size as u128).to_be_bytes());
         State {
             h: (
                 // SHA2-512 IV constants
-                load_64x2(0x6a09e667f3bcc908, 0xbb67ae8584caa73b),
-                load_64x2(0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1),
-                load_64x2(0x510e527fade682d1, 0x9b05688c2b3e6c1f),
-                load_64x2(0x1f83d9abfb41bd6b, 0x5be0cd19137e2179),
+                load(&hex!("08c9bcf367e6096a3ba7ca8485ae67bb")),
+                load(&hex!("2bf894fe72f36e3cf1361d5f3af54fa5")),
+                load(&hex!("d182e6ad7f520e511f6c3e2b8c68059b")),
+                load(&hex!("6bbd41fbabd9831f79217e1319cde05b")),
             ),
             t: (
                 // SHA2-512-256 IV constants
-                load_64x2(0x22312194fc2bf72c, 0x9f555fa3c84c64c2),
-                load_64x2(0x2393b86b6f53b151, 0x963877195940eabd),
-                load_64x2(0x96283ee2a88effe3, 0xbe5e1e2553863992),
-                xor(
-                    load_64x2(0x2b0199fc2c85b8aa, 0x0eb72ddc81c52ca2),
-                    output_size,
-                ),
+                load(&hex!("2cf72bfc94213122c2644cc8a35f559f")),
+                load(&hex!("51b1536f6bb89323bdea405919773896")),
+                load(&hex!("e3ff8ea8e23e289692398653251e5ebe")),
+                xor(load(&hex!("aab8852cfc99012ba22cc581dc2db70e")), output_size),
             ),
             m_len: 0,
         }
@@ -79,7 +77,7 @@ impl State {
                 // Only include the counter as an input to the permutation. This avoids a
                 // Streebog-type situation in which attackers have control of some of the bits of
                 // the output of a block's compression.
-                xor3(x3, m3, load(&m_len.to_le_bytes())),
+                xor3(x3, m3, load(&m_len.to_be_bytes())),
             );
             (h0, h1, h2, h3) = (xor(x0, y0), xor(x1, y1), xor(x2, y2), xor(x3, y3));
         }
