@@ -13,37 +13,38 @@ pub use crate::mmo::Areion512Mmo;
 pub use crate::sponge::Areion256Sponge;
 
 pub use digest;
+use hex_literal::hex;
 
-const RC0: [[u64; 2]; 24] = [
-    [0x13198a2e03707344, 0x243f6a8885a308d3],
-    [0x082efa98ec4e6c89, 0xa4093822299f31d0],
-    [0xbe5466cf34e90c6c, 0x452821e638d01377],
-    [0x3f84d5b5b5470917, 0xc0ac29b7c97c50dd],
-    [0xd1310ba698dfb5ac, 0x9216d5d98979fb1b],
-    [0xb8e1afed6a267e96, 0x2ffd72dbd01adfb7],
-    [0x24a19947b3916cf7, 0xba7c9045f12c7f99],
-    [0x36920d871574e690, 0x801f2e2858efc166],
-    [0x0d95748f728eb658, 0xa458fea3f4933d7e],
-    [0x7b54a41dc25a59b5, 0x718bcd5882154aee],
-    [0xc5d1b023286085f0, 0x9c30d5392af26013],
-    [0x8e79dcb0603a180e, 0xca417918b8db38ef],
-    [0xd71577c1bd314b27, 0x6c9e0e8bb01e8a3e],
-    [0xe65525f3aa55ab94, 0x78af2fda55605c60],
-    [0x55ca396a2aab10b6, 0x5748986263e81440],
-    [0xa15486af7c72e993, 0xb4cc5c341141e8ce],
-    [0x2ba9c55d741831f6, 0xb3ee1411636fbc2a],
-    [0xafd6ba336c24cf5c, 0xce5c3e169b87931e],
-    [0x3b8f48986b4bb9af, 0x7a32538128958677],
-    [0x61d809ccfb21a991, 0xc4bfe81b66282193],
-    [0xef845d5de98575b1, 0x487cac605dec8032],
-    [0x23893e81d396acc5, 0xdc262302eb651b88],
-    [0xe0b4482a48420040, 0xf6d6ff383f442392],
-    [0x21c66842f6e96c9a, 0x69c8f04a9e1f9b5e],
+static RC0: [[u8; 16]; 24] = [
+    hex!("447370032e8a1913d308a385886a3f24"),
+    hex!("896c4eec98fa2e08d0319f29223809a4"),
+    hex!("6c0ce934cf6654be7713d038e6212845"),
+    hex!("170947b5b5d5843fdd507cc9b729acc0"),
+    hex!("acb5df98a60b31d11bfb7989d9d51692"),
+    hex!("967e266aedafe1b8b7df1ad0db72fd2f"),
+    hex!("f76c91b34799a124997f2cf145907cba"),
+    hex!("90e67415870d923666c1ef58282e1f80"),
+    hex!("58b68e728f74950d7e3d93f4a3fe58a4"),
+    hex!("b5595ac21da4547bee4a158258cd8b71"),
+    hex!("f085602823b0d1c51360f22a39d5309c"),
+    hex!("0e183a60b0dc798eef38dbb8187941ca"),
+    hex!("274b31bdc17715d73e8a1eb08b0e9e6c"),
+    hex!("94ab55aaf32555e6605c6055da2faf78"),
+    hex!("b610ab2a6a39ca554014e86362984857"),
+    hex!("93e9727caf8654a1cee84111345cccb4"),
+    hex!("f63118745dc5a92b2abc6f631114eeb3"),
+    hex!("5ccf246c33bad6af1e93879b163e5cce"),
+    hex!("afb94b6b98488f3b778695288153327a"),
+    hex!("91a921fbcc09d861932128661be8bfc4"),
+    hex!("b17585e95d5d84ef3280ec5d60ac7c48"),
+    hex!("c5ac96d3813e8923881b65eb022326dc"),
+    hex!("400042482a48b4e09223443f38ffd6f6"),
+    hex!("9a6ce9f64268c6215e9b1f9e4af0c869"),
 ];
 
 #[inline]
 fn round_256<const R: usize>(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
-    let rc0 = load_64x2(RC0[R][0], RC0[R][1]);
+    let rc0 = load(&RC0[R]);
     let rc1 = zero();
     let (x1, x0) = (enc(enc(x0, rc0), x1), enc_last(x0, rc1));
     (x0, x1)
@@ -65,7 +66,7 @@ pub fn areion256(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
 
 #[inline]
 fn inv_round_256<const R: usize>(x0: AesBlock, x1: AesBlock) -> (AesBlock, AesBlock) {
-    let rc0 = load_64x2(RC0[R][0], RC0[R][1]);
+    let rc0 = load(&RC0[R]);
     let rc1 = zero();
     let x0 = dec_last(x0, rc1);
     let x1 = enc(enc(x0, rc0), x1);
@@ -93,7 +94,7 @@ fn round_512<const R: usize>(
     x2: AesBlock,
     x3: AesBlock,
 ) -> (AesBlock, AesBlock, AesBlock, AesBlock) {
-    let rc0 = load_64x2(RC0[R][0], RC0[R][1]);
+    let rc0 = load(&RC0[R]);
     let rc1 = zero();
     let x1 = enc(x0, x1);
     let x3 = enc(x2, x3);
@@ -134,7 +135,7 @@ fn inv_round_512<const R: usize>(
     x2: AesBlock,
     x3: AesBlock,
 ) -> (AesBlock, AesBlock, AesBlock, AesBlock) {
-    let rc0 = load_64x2(RC0[R][0], RC0[R][1]);
+    let rc0 = load(&RC0[R]);
     let rc1 = zero();
     let x0 = dec_last(x0, rc1);
     let x2 = dec_last(dec_last(inv_mix(x2), rc0), rc1);

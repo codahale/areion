@@ -10,6 +10,7 @@ use digest::crypto_common::AlgorithmName;
 use digest::generic_array::GenericArray;
 use digest::typenum::{Unsigned, U32};
 use digest::{HashMarker, Output, OutputSizeUser, Reset};
+use hex_literal::hex;
 
 #[derive(Debug, Clone)]
 struct State(AesBlock, AesBlock);
@@ -17,8 +18,8 @@ struct State(AesBlock, AesBlock);
 impl Default for State {
     fn default() -> Self {
         Self(
-            load_64x2(0x85ae67bb67e6096a, 0x3af54fa572f36e3c),
-            load_64x2(0x8c68059b7f520e51, 0x19cde05babd9831f),
+            load(&hex!("6a09e667bb67ae853c6ef372a54ff53a")),
+            load(&hex!("510e527f9b05688c1f83d9ab5be0cd19")),
         )
     }
 }
