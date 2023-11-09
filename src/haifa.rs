@@ -169,6 +169,7 @@ pub type AreionHaifa512 = AreionHaifa<U64>;
 #[cfg(test)]
 mod tests {
     use digest::Digest;
+    use quickcheck_macros::quickcheck;
 
     use super::*;
 
@@ -178,5 +179,12 @@ mod tests {
             .chain_update([8u8; 64])
             .chain_update(b"this is a potato")
             .finalize();
+    }
+
+    #[quickcheck]
+    fn different_inputs_yield_different_digests(a: Vec<u8>, b: Vec<u8>) -> bool {
+        let aa = AreionHaifa512::new().chain_update(&a).finalize();
+        let bb = AreionHaifa512::new().chain_update(&b).finalize();
+        aa == bb || a != b
     }
 }

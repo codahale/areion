@@ -98,6 +98,14 @@ mod tests {
 
     use digest::Digest;
     use expect_test::expect;
+    use quickcheck_macros::quickcheck;
+
+    #[quickcheck]
+    fn different_inputs_yield_different_digests(a: Vec<u8>, b: Vec<u8>) -> bool {
+        let aa = Areion512Md::new().chain_update(&a).finalize();
+        let bb = Areion512Md::new().chain_update(&b).finalize();
+        aa == bb || a != b
+    }
 
     #[test]
     fn areion512_md_test_vector_1() {

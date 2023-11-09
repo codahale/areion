@@ -110,3 +110,18 @@ impl AlgorithmName for Core {
 }
 
 pub type Areion512Mmo = CoreWrapper<Core>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use digest::Digest;
+    use quickcheck_macros::quickcheck;
+
+    #[quickcheck]
+    fn different_inputs_yield_different_digests(a: Vec<u8>, b: Vec<u8>) -> bool {
+        let aa = Areion512Mmo::new().chain_update(&a).finalize();
+        let bb = Areion512Mmo::new().chain_update(&b).finalize();
+        aa == bb || a != b
+    }
+}

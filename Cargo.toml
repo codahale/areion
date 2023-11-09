@@ -11,6 +11,8 @@ hex-literal = "0.4.1"
 divan = "0.1.2"
 expect-test = "1.4.1"
 hex = "0.4.3"
+quickcheck = "1.0.3"
+quickcheck_macros = "1.0.0"
 
 [workspace]
 members = ["benchmarks"]
