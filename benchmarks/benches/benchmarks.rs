@@ -42,12 +42,6 @@ fn areion512_dm(b: Bencher) {
     .bench_values(|(x0, x1, x2, x3)| areion::areion512_dm(x0, x1, x2, x3))
 }
 
-#[divan::bench(counters = [BytesCount::new(32usize)])]
-fn simpira_v2_b2(b: Bencher) {
-    b.with_inputs(|| (areion::load(&[0u8; 16]), areion::load(&[0u8; 16])))
-        .bench_values(|(x0, x1)| areion::simpira_v2_b2(x0, x1))
-}
-
 const LENS: &[usize] = &[16, 256, 1024, 16 * 1024, 1024 * 1024];
 
 #[divan::bench(consts = LENS)]

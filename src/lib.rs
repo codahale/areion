@@ -14,34 +14,6 @@ pub use crate::sponge::Areion256Sponge;
 
 pub use digest;
 
-#[inline]
-#[allow(clippy::identity_op)]
-unsafe fn simpira_f<const C: u32, const B: u32>(x: AesBlock) -> AesBlock {
-    let c = load_32x4(0x00 ^ C ^ B, 0x10 ^ C ^ B, 0x20 ^ C ^ B, 0x30 ^ C ^ B);
-    enc(enc(x, c), zero())
-}
-
-pub fn simpira_v2_b2(mut x0: AesBlock, mut x1: AesBlock) -> (AesBlock, AesBlock) {
-    unsafe {
-        (x0, x1) = (xor(simpira_f::<1, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<2, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<3, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<4, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<5, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<6, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<7, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<8, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<9, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<10, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<11, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<12, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<13, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<14, 2>(x0), x1), x0);
-        (x0, x1) = (xor(simpira_f::<15, 2>(x0), x1), x0);
-        (x0, x1)
-    }
-}
-
 const RC0: [[u64; 2]; 24] = [
     [0x13198a2e03707344, 0x243f6a8885a308d3],
     [0x082efa98ec4e6c89, 0xa4093822299f31d0],
