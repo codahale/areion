@@ -49,11 +49,7 @@ fn areion512_md<const LEN: usize>(bencher: divan::Bencher) {
     bencher
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))
-        .bench_refs(|block| {
-            areion::Areion512Md::default()
-                .chain_update(block)
-                .finalize()
-        });
+        .bench_refs(|block| areion::Areion512Md::default().chain_update(block).finalize());
 }
 
 #[divan::bench(consts = LENS)]
@@ -61,11 +57,7 @@ fn areion512_mmo<const LEN: usize>(bencher: divan::Bencher) {
     bencher
         .with_inputs(|| vec![0u8; LEN])
         .counter(BytesCount::new(LEN))
-        .bench_refs(|block| {
-            areion::Areion512Mmo::default()
-                .chain_update(block)
-                .finalize()
-        });
+        .bench_refs(|block| areion::Areion512Mmo::default().chain_update(block).finalize());
 }
 
 #[divan::bench(consts = LENS)]

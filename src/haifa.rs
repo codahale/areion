@@ -48,11 +48,7 @@ impl State {
 
 impl State {
     fn compress(&mut self, blocks: &[GenericArray<u8, U64>], bit_len: u64) {
-        let Self {
-            h: (mut h0, mut h1, mut h2, mut h3),
-            t: (t0, t1, t2, t3),
-            mut m_len,
-        } = *self;
+        let Self { h: (mut h0, mut h1, mut h2, mut h3), t: (t0, t1, t2, t3), mut m_len } = *self;
 
         for block in blocks {
             // Increment the bit counter *before* compressing the block. This eliminates the need
@@ -124,10 +120,7 @@ impl VariableOutputCore for Core {
         if !(0 < output_size && output_size <= 64) {
             return Err(digest::InvalidOutputSize);
         }
-        Ok(Core {
-            state: State::new(output_size),
-            output_size,
-        })
+        Ok(Core { state: State::new(output_size), output_size })
     }
 
     fn finalize_variable_core(&mut self, buffer: &mut Buffer<Self>, out: &mut Output<Self>) {
@@ -175,10 +168,7 @@ mod tests {
 
     #[test]
     fn round_trip() {
-        AreionHaifa512::new()
-            .chain_update([8u8; 64])
-            .chain_update(b"this is a potato")
-            .finalize();
+        AreionHaifa512::new().chain_update([8u8; 64]).chain_update(b"this is a potato").finalize();
     }
 
     #[quickcheck]

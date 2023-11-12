@@ -124,9 +124,7 @@ mod tests {
         expect![[r#"
                 7f 22 34 44 5f 3a 72 00 65 93 79 42 01 53 6c 94
                 09 5d ab d3 fd b5 84 67 48 d3 59 55 5c 52 e6 51"#]]
-        .assert_eq(&hex_fmt(
-            &Areion512Md::default().chain_update(data).finalize(),
-        ));
+        .assert_eq(&hex_fmt(&Areion512Md::default().chain_update(data).finalize()));
     }
 
     #[test]
@@ -146,8 +144,6 @@ mod tests {
         expect![[r#"
                 3e 4d 31 0f be 21 d0 7b b9 00 46 88 a1 50 36 b7
                 ab d9 ae 2f e9 e6 0c 9a ca 2a cc 36 98 5e 60 0b"#]]
-        .assert_eq(&hex_fmt(
-            &Areion512Md::default().chain_update(data).finalize(),
-        ));
+        .assert_eq(&hex_fmt(&Areion512Md::default().chain_update(data).finalize()));
     }
 }
