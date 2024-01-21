@@ -44,59 +44,59 @@ fn areion512_dm(b: Bencher) {
 
 const LENS: &[usize] = &[16, 256, 1024, 16 * 1024, 1024 * 1024];
 
-#[divan::bench(consts = LENS)]
-fn areion512_md<const LEN: usize>(bencher: divan::Bencher) {
+#[divan::bench(args = LENS)]
+fn areion512_md(bencher: divan::Bencher, len: usize) {
     bencher
-        .with_inputs(|| vec![0u8; LEN])
-        .counter(BytesCount::new(LEN))
+        .with_inputs(|| vec![0u8; len])
+        .counter(BytesCount::new(len))
         .bench_refs(|block| areion::Areion512Md::default().chain_update(block).finalize());
 }
 
-#[divan::bench(consts = LENS)]
-fn areion512_mmo<const LEN: usize>(bencher: divan::Bencher) {
+#[divan::bench(args = LENS)]
+fn areion512_mmo(bencher: divan::Bencher, len: usize) {
     bencher
-        .with_inputs(|| vec![0u8; LEN])
-        .counter(BytesCount::new(LEN))
+        .with_inputs(|| vec![0u8; len])
+        .counter(BytesCount::new(len))
         .bench_refs(|block| areion::Areion512Mmo::default().chain_update(block).finalize());
 }
 
-#[divan::bench(consts = LENS)]
-fn areion256_512_sponge<const LEN: usize>(bencher: divan::Bencher) {
+#[divan::bench(args = LENS)]
+fn areion256_512_sponge(bencher: divan::Bencher, len: usize) {
     bencher
-        .with_inputs(|| vec![0u8; LEN])
-        .counter(BytesCount::new(LEN))
+        .with_inputs(|| vec![0u8; len])
+        .counter(BytesCount::new(len))
         .bench_refs(|block| Areion256Sponge::new().chain_update(block).finalize());
 }
 
-#[divan::bench(consts = LENS)]
-fn areion512_haifa<const LEN: usize>(bencher: divan::Bencher) {
+#[divan::bench(args = LENS)]
+fn areion512_haifa(bencher: divan::Bencher, len: usize) {
     bencher
-        .with_inputs(|| vec![0u8; LEN])
-        .counter(BytesCount::new(LEN))
+        .with_inputs(|| vec![0u8; len])
+        .counter(BytesCount::new(len))
         .bench_refs(|block| AreionHaifa512::new().chain_update(block).finalize());
 }
 
-#[divan::bench(consts = LENS)]
-fn sha256<const LEN: usize>(bencher: divan::Bencher) {
+#[divan::bench(args = LENS)]
+fn sha256(bencher: divan::Bencher, len: usize) {
     bencher
-        .with_inputs(|| vec![0u8; LEN])
-        .counter(BytesCount::new(LEN))
+        .with_inputs(|| vec![0u8; len])
+        .counter(BytesCount::new(len))
         .bench_refs(|block| Sha256::new().chain_update(block).finalize());
 }
 
-#[divan::bench(consts = LENS)]
-fn blake3<const LEN: usize>(bencher: divan::Bencher) {
+#[divan::bench(args = LENS)]
+fn blake3(bencher: divan::Bencher, len: usize) {
     bencher
-        .with_inputs(|| vec![0u8; LEN])
-        .counter(BytesCount::new(LEN))
+        .with_inputs(|| vec![0u8; len])
+        .counter(BytesCount::new(len))
         .bench_refs(|block| blake3::hash(block));
 }
 
-#[divan::bench(consts = LENS)]
-fn sha512<const LEN: usize>(bencher: divan::Bencher) {
+#[divan::bench(args = LENS)]
+fn sha512(bencher: divan::Bencher, len: usize) {
     bencher
-        .with_inputs(|| vec![0u8; LEN])
-        .counter(BytesCount::new(LEN))
+        .with_inputs(|| vec![0u8; len])
+        .counter(BytesCount::new(len))
         .bench_refs(|block| Sha512::new().chain_update(block).finalize());
 }
 
