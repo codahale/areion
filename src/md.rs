@@ -146,4 +146,11 @@ mod tests {
                 ab d9 ae 2f e9 e6 0c 9a ca 2a cc 36 98 5e 60 0b"#]]
         .assert_eq(&hex_fmt(&Areion512Md::default().chain_update(data).finalize()));
     }
+
+    #[test]
+    fn fuzz() {
+        bolero::check!().with_type::<Vec<u8>>().for_each(|input| {
+            Areion512Md::new().chain_update(input).finalize();
+        });
+    }
 }

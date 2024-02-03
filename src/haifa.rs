@@ -177,4 +177,11 @@ mod tests {
         let bb = AreionHaifa512::new().chain_update(&b).finalize();
         aa == bb || a != b
     }
+
+    #[test]
+    fn fuzz() {
+        bolero::check!().with_type::<Vec<u8>>().for_each(|input| {
+            AreionHaifa512::new().chain_update(input).finalize();
+        });
+    }
 }

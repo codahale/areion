@@ -8,6 +8,7 @@ digest = { version = "0.10.7", default-features = false, features = ["block-buff
 hex-literal = "0.4.1"
 
 [dev-dependencies]
+bolero = "0.10.0"
 expect-test = "1.4.1"
 hex = "0.4.3"
 quickcheck = "1.0.3"

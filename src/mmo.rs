@@ -124,4 +124,11 @@ mod tests {
         let bb = Areion512Mmo::new().chain_update(&b).finalize();
         aa == bb || a != b
     }
+
+    #[test]
+    fn fuzz() {
+        bolero::check!().with_type::<Vec<u8>>().for_each(|input| {
+            Areion512Mmo::new().chain_update(input).finalize();
+        });
+    }
 }
