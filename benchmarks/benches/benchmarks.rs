@@ -65,8 +65,8 @@ fn areion512_md(c: &mut Criterion) {
     for &(len, id) in LENS {
         let input = vec![0u8; len];
         g.throughput(Throughput::Bytes(len as u64));
-        g.bench_with_input(id, &input, |b, block| {
-            b.iter(|| Areion512Md::default().chain_update(block).finalize());
+        g.bench_function(id, |b| {
+            b.iter(|| Areion512Md::default().chain_update(&input).finalize());
         });
     }
     g.finish();
@@ -77,8 +77,8 @@ fn areion512_mmo(c: &mut Criterion) {
     for &(len, id) in LENS {
         let input = vec![0u8; len];
         g.throughput(Throughput::Bytes(len as u64));
-        g.bench_with_input(id, &input, |b, block| {
-            b.iter(|| Areion512Mmo::default().chain_update(block).finalize());
+        g.bench_function(id, |b| {
+            b.iter(|| Areion512Mmo::default().chain_update(&input).finalize());
         });
     }
     g.finish();
@@ -89,8 +89,8 @@ fn areion256_sponge(c: &mut Criterion) {
     for &(len, id) in LENS {
         let input = vec![0u8; len];
         g.throughput(Throughput::Bytes(len as u64));
-        g.bench_with_input(id, &input, |b, block| {
-            b.iter(|| Areion256Sponge::default().chain_update(block).finalize());
+        g.bench_function(id, |b| {
+            b.iter(|| Areion256Sponge::default().chain_update(&input).finalize());
         });
     }
     g.finish();
@@ -101,8 +101,8 @@ fn areion512_haifa(c: &mut Criterion) {
     for &(len, id) in LENS {
         let input = vec![0u8; len];
         g.throughput(Throughput::Bytes(len as u64));
-        g.bench_with_input(id, &input, |b, block| {
-            b.iter(|| AreionHaifa512::default().chain_update(block).finalize());
+        g.bench_function(id, |b| {
+            b.iter(|| AreionHaifa512::default().chain_update(&input).finalize());
         });
     }
     g.finish();
@@ -113,8 +113,8 @@ fn sha256(c: &mut Criterion) {
     for &(len, id) in LENS {
         let input = vec![0u8; len];
         g.throughput(Throughput::Bytes(len as u64));
-        g.bench_with_input(id, &input, |b, block| {
-            b.iter(|| Sha256::default().chain_update(block).finalize());
+        g.bench_function(id, |b| {
+            b.iter(|| Sha256::default().chain_update(&input).finalize());
         });
     }
     g.finish();
@@ -125,8 +125,8 @@ fn sha512(c: &mut Criterion) {
     for &(len, id) in LENS {
         let input = vec![0u8; len];
         g.throughput(Throughput::Bytes(len as u64));
-        g.bench_with_input(id, &input, |b, block| {
-            b.iter(|| Sha512::default().chain_update(block).finalize());
+        g.bench_function(id, |b| {
+            b.iter(|| Sha512::default().chain_update(&input).finalize());
         });
     }
     g.finish();
@@ -137,8 +137,8 @@ fn blake3(c: &mut Criterion) {
     for &(len, id) in LENS {
         let input = vec![0u8; len];
         g.throughput(Throughput::Bytes(len as u64));
-        g.bench_with_input(id, &input, |b, block| {
-            b.iter(|| ::blake3::hash(block));
+        g.bench_function(id, |b| {
+            b.iter(|| ::blake3::hash(&input));
         });
     }
     g.finish();
